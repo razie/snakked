@@ -1,0 +1,9 @@
+bin
+.scala_dependencies
+dist
+timestamp.txt
+project/boot
+project/build/target
+lib_managed
+target
+
