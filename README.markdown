@@ -80,7 +80,7 @@ How?
 
 In the sbt Project file for your project (project/build/Project.scala), add the dependency: 
 
-    val snakk = "com.razie" %% "snakked" % "0.1-SNAPSHOT"
+    val snakk = "com.razie" %% "snakked" % "0.2-SNAPSHOT"
 
 Snakking:
 1. snakk java beans (done, needs testing)
