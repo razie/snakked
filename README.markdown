@@ -72,6 +72,7 @@ Why "Snakked" ?
 ------------
 
 Well, it really means
+
  - scala naked objects => scala naked => s-naked => snakked (use kk to underline the lack of reptilian dependencies)
  - funny spelling for snack (~ed), (~ing)
 
@@ -84,6 +85,7 @@ In the sbt Project file for your project (project/build/Project.scala), add the 
     val snakk = "com.razie" %% "snakked" % "0.2-SNAPSHOT"
 
 Snakking:
+
 1. snakk java beans (done, needs testing)
 2. snakk EMF beans
 3. snakk adapters
@@ -100,7 +102,7 @@ No project is a net new invention, all are built on the shoulders of others. Her
 
 REST  - simple entity based addressing and management via HTTP
 XCAP  - unified access to configuration in an XPath manner
-XPATH
+XPATH - well, itself
 OSS/J - set of OSS through Java standards - based on a nice common generic entity management API
 
 
@@ -117,5 +119,8 @@ Different kinds of keys and unique Ids are in razie.g - I like this: reference a
 
 First draft of the unified access/management interface is in razie.assets - I'm trying to simplify it.
 
+XP and graph navigation including links and associations in razie.XP
+
+Graph support in razie.g as well
 
 
