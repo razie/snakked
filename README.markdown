@@ -93,6 +93,17 @@ Architectural notes
 ===================
 
 
+Mixing pot
+----------
+
+No project is a net new invention, all are built on the shoulders of others. Here's some of the stuff that I remember throwing in this mixing pot.
+
+REST  - simple entity based addressing and management via HTTP
+XCAP  - unified access to configuration in an XPath manner
+XPATH
+OSS/J - set of OSS through Java standards - based on a nice common generic entity management API
+
+
 Snakked and DCI
 -----------------
 
