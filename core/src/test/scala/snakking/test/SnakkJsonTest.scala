@@ -2,7 +2,7 @@
  * Razvan's public code. Copyright 2008 based on Apache license (share alike) see LICENSE.txt for
  * details.
  */
-package snakked.test
+package snakking.test
 
 import org.junit.{Test=>Testme}
 import org.scalatest.junit.MustMatchersForJUnit
@@ -16,7 +16,7 @@ import org.json._
  * 
  * @author razvanc99
  */
-class XpJsonTest extends MustMatchersForJUnit {
+class SnakkJsonTest extends MustMatchersForJUnit {
      val json = """
 {
   "errorCode": 203, 

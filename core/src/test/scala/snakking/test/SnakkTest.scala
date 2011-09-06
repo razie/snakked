@@ -1,4 +1,4 @@
-package snakked.test
+package snakking.test
 
 import org.junit._
 import org.scalatest.junit.MustMatchersForJUnit

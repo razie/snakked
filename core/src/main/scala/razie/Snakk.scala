@@ -10,16 +10,21 @@ import razie.xp.JsonWrapper
 import razie.xp.XpJsonSolver
 
 /** wraps an URL with some arguments to be passed in the call */
-class SnakkUrl (val url:java.net.URL, val attr:AA) {
+class SnakkUrl(val url: java.net.URL, val attr: AA) {
   /** transform this URL in one with basic authentication */
-  def  basic (user:String, password:String) = 
-    new SnakkUrl (url, attr ++ AA("Authorization", "Basic " + new sun.misc.BASE64Encoder().encode((user+":"+password).getBytes)))
+  def basic(user: String, password: String) =
+    new SnakkUrl(url, attr ++ AA("Authorization", "Basic " + new sun.misc.BASE64Encoder().encode((user + ":" + password).getBytes)))
 }
 
-/** rapid decomposition of data in different formats, from different sources */
+/**
+ * rapid decomposition of data in different formats, from different sources
+ *
+ * NOTE that snakking will wrap the snacked so you'll need to unwrap at the end, so an expression like
+ * { root \ "j" map identity }  is the same as { for ( n <- root \ "j" ) yield n }
+ */
 object Snakk {
   /** build a URL */
-  def url(s: String, attr:AA=AA.EMPTY) = new SnakkUrl(new java.net.URL(s), attr)
+  def url(s: String, attr: AA = AA.EMPTY) = new SnakkUrl(new java.net.URL(s), attr)
 
   /** retrieve the content from URL, as String */
   def body(url: SnakkUrl) = com.razie.pub.comms.Comms.readUrl(url.url.toString, url.attr)
@@ -47,16 +52,20 @@ object Snakk {
 class ListWrapper[T](val nodes: List[T], val ctx: XpSolver[T, Any]) {
   /** the list of children with the respective tag */
   def \(name: String): ListWrapper[T] = new ListWrapper(nodes.flatMap(n => XP[T]("*/" + name).xpl(ctx, n)), ctx)
+  /** the head of the list of children with the respective tag */
+  def \\(name: String): T = (this \ name).headOption.get
   /** the list of children two levels down with the respective tag */
   def \*(name: String): ListWrapper[T] = new ListWrapper(nodes.flatMap(n => XP[T]("*/*/" + name).xpl(ctx, n)), ctx)
+  /** the head of the list of children two levels down with the respective tag */
+  def \\*(name: String): T = (this \* name).headOption.get
   /** the list of attributes with the respective name */
   def \@(name: String): List[String] = nodes map (n => XP[T](if (name.startsWith("@")) name else "@" + name).xpa(ctx, n))
   /** the single attributes with the respective name */
   def \@@(name: String): String = nodes.headOption.map(n => XP[T](if (name.startsWith("@")) name else "@" + name).xpa(ctx, n)) getOrElse null
 
-  def apply (i:Int) = new Wrapper(nodes.apply(i), ctx)
-  def \ (i:Int) = new Wrapper(nodes.apply(i), ctx)
-  
+  def apply(i: Int) = new Wrapper(nodes.apply(i), ctx)
+  def \(i: Int) = new Wrapper(nodes.apply(i), ctx)
+
   def foreach[B](f: T => B): Unit = nodes.foreach(f)
   def map[B](f: T => B): List[B] = nodes.map(f)
   def flatMap[B](f: T => List[B]): List[B] = nodes.flatMap(f)
@@ -72,6 +81,12 @@ class ListWrapper[T](val nodes: List[T], val ctx: XpSolver[T, Any]) {
 class Wrapper[T](val node: T, val ctx: XpSolver[T, Any]) {
   /** the list of children with the respective tag */
   def \(name: String): ListWrapper[T] = new ListWrapper(XP[T]("*/" + name).xpl(ctx, node), ctx)
+  /** the head of the list of children with the respective tag */
+  def \\(name: String): T = (this \ name).headOption.get
+  /** the list of children two levels down with the respective tag */
+  def \*(name: String): ListWrapper[T] = new ListWrapper(XP[T]("*/*/" + name).xpl(ctx, node), ctx)
+  /** the head of the list of children two levels down with the respective tag */
+  def \\*(name: String): T = (this \* name).headOption.get
   /** the attribute with the respective name */
   def \@(name: String): String = XP[T](if (name.startsWith("@")) name else "@" + name).xpa(ctx, node)
   /** the single attributes with the respective name */

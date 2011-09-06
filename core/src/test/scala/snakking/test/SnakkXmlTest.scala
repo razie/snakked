@@ -3,7 +3,7 @@
  *   )   / /(__)\  / /_  _)(_  )__) \__ \    )___/ )(__)(  ) _ <     README.txt
  *  (_)\_)(__)(__)(____)(____)(____)(___/   (__)  (______)(____/    LICENSE.txt
  */
-package snakked.test
+package snakking.test
 
 import razie.{ XP, DomXpSolver }
 import razie.base.data.RazElement._
@@ -16,7 +16,7 @@ import org.scalatest.junit.MustMatchersForJUnit
  * 
  * @author razvanc99
  */
-class TestXpScalaXml extends MustMatchersForJUnit {
+class SnakkXmlTest extends MustMatchersForJUnit {
 
   @Test def testw41 = expect(List("a")) { xxml \ "/" map (_.label) }
 //  def testw42 = expect(List("a")) { xxml \ "a" map (_.label) }

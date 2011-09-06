@@ -19,14 +19,31 @@ razie.Snakk gives simple methods to suck content from URLs, including files etc 
 
 List of blog titles from an XML and JSON feed:
 
-    val xmlFeed = "http://feeds.razie.com/Razblog?format=xml"
-    val jsonFeed = "http://blog.razie.com/feeds/posts/default?alt=json"
+    val xmlFeed  = url ("http://feeds.razie.com/Razblog?format=xml")
+    val jsonFeed = url ("http://blog.razie.com/feeds/posts/default?alt=json")
 
-    for (n <- xml(url(xmlFeed)) \ "channel" \ "item" \ "title") println (n.text)
+    for (n <- xml(xmlFeed) \ "channel" \ "item" \ "title") println (n.text)
 
-    for (n <- json(url(jsonFeed)) \ "feed" \ "entry" \ "title" \@ "$t") println (n)
-    
+    for (n <- json(jsonFeed) \ "feed" \ "entry" \ "title" \@ "$t") println (n)
+
 See more examples in core/src/test
+
+Snakking a bean example:
+
+    case class Student (name: String, age: Int)
+    case class Class   (name: String, students: Student*)
+    case class School  (name: String, classes: Class*)
+
+    val school = Snakk bean School("my school",
+      Class("1st grade",
+        Student("Joe", 6),
+        Student("Ann", 7)),
+      Class("2nd grade",
+        Student("Mary", 8),
+        Student("George", 7)))
+
+    @Test def test11 = expect("Ann" :: "George" :: Nil) { school \ "classes" \ "students[age==7]" \@ "name" }
+
 
 Naked Objects
 -------------
