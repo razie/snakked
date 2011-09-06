@@ -26,6 +26,7 @@ List of blog titles from an XML and JSON feed:
 
     for (n <- json(url(jsonFeed)) \ "feed" \ "entry" \ "title" \@ "$t") println (n)
     
+See more examples in core/src/test
 
 Naked Objects
 -------------
