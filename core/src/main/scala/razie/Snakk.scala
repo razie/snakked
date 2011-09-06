@@ -4,15 +4,17 @@
  */
 package razie
 
-//import razie.GPath
-//import razie._
 import org.json.JSONObject
+
 import razie.xp.JsonWrapper
 import razie.xp.XpJsonSolver
-//import razie.AA
 
 /** wraps an URL with some arguments to be passed in the call */
-class SnakkUrl (val url:java.net.URL, val attr:AA)
+class SnakkUrl (val url:java.net.URL, val attr:AA) {
+  /** transform this URL in one with basic authentication */
+  def  basic (user:String, password:String) = 
+    new SnakkUrl (url, attr ++ AA("Authorization", "Basic " + new sun.misc.BASE64Encoder().encode((user+":"+password).getBytes)))
+}
 
 /** rapid decomposition of data in different formats, from different sources */
 object Snakk {
@@ -45,12 +47,12 @@ object Snakk {
 class ListWrapper[T](val nodes: List[T], val ctx: XpSolver[T, Any]) {
   /** the list of children with the respective tag */
   def \(name: String): ListWrapper[T] = new ListWrapper(nodes.flatMap(n => XP[T]("*/" + name).xpl(ctx, n)), ctx)
-  /** the list of children with the respective tag */
+  /** the list of children two levels down with the respective tag */
   def \*(name: String): ListWrapper[T] = new ListWrapper(nodes.flatMap(n => XP[T]("*/*/" + name).xpl(ctx, n)), ctx)
   /** the list of attributes with the respective name */
   def \@(name: String): List[String] = nodes map (n => XP[T](if (name.startsWith("@")) name else "@" + name).xpa(ctx, n))
   /** the single attributes with the respective name */
-  def \@@(name: String): String = nodes.firstOption.map(n => XP[T](if (name.startsWith("@")) name else "@" + name).xpa(ctx, n)) getOrElse null
+  def \@@(name: String): String = nodes.headOption.map(n => XP[T](if (name.startsWith("@")) name else "@" + name).xpa(ctx, n)) getOrElse null
 
   def apply (i:Int) = new Wrapper(nodes.apply(i), ctx)
   def \ (i:Int) = new Wrapper(nodes.apply(i), ctx)
@@ -59,8 +61,8 @@ class ListWrapper[T](val nodes: List[T], val ctx: XpSolver[T, Any]) {
   def map[B](f: T => B): List[B] = nodes.map(f)
   def flatMap[B](f: T => List[B]): List[B] = nodes.flatMap(f)
 
-  def first(n: Any = null) = firstOption getOrElse n
-  def firstOption = nodes.firstOption
+  def first(n: Any = null) = headOption getOrElse n
+  def headOption = nodes.headOption
   //  def firstOption = nodes.firstOption map (new Wrapper(_, ctx))
 
   override def toString = nodes.toString

@@ -3,27 +3,27 @@
  *   )   / /(__)\  / /_  _)(_  )__) \__ \    )___/ )(__)(  ) _ <     README.txt
  *  (_)\_)(__)(__)(____)(____)(____)(___/   (__)  (______)(____/    LICENSE.txt
  */
-package razie.xp.test
+package snakked.test
 
-import org.scalatest.junit._
-import org.scalatest.SuperSuite
 import razie.{ XP, DomXpSolver }
 import razie.base.data.RazElement._
 import razie.Snakk
+import org.junit._
+import org.scalatest.junit.MustMatchersForJUnit
 
 /**
  * junit tests for the XP stuff
  * 
  * @author razvanc99
  */
-class TestXpScalaXml extends JUnit3Suite {
+class TestXpScalaXml extends MustMatchersForJUnit {
 
-  def testw41 = expect(List("a")) { xxml \ "/" map (_.label) }
+  @Test def testw41 = expect(List("a")) { xxml \ "/" map (_.label) }
 //  def testw42 = expect(List("a")) { xxml \ "a" map (_.label) }
-  def testw43 = expect(List("b1", "b2")) { xxml \ "b" map(x => (x \ "@ba").toString) }
-  def testw44 = expect(List("b1", "b2")) { xxml \ "b" \@ "ba"}
-  def testw45 = expect(List("c11", "c12", "c13")) { xxml \ "b[@ba=='b1']" \ "c" \@ "ca" }
-  def testw46 = expect(List("b1", "b2")) { xxml \ "*" \@ "ba" }
+  @Test def testw43 = expect(List("b1", "b2")) { xxml \ "b" map(x => (x \ "@ba").toString) }
+  @Test def testw44 = expect(List("b1", "b2")) { xxml \ "b" \@ "ba"}
+  @Test def testw45 = expect(List("c11", "c12", "c13")) { xxml \ "b[@ba=='b1']" \ "c" \@ "ca" }
+  @Test def testw46 = expect(List("b1", "b2")) { xxml \ "*" \@ "ba" }
 
   val xxml = Snakk (TXXmls.x)
 }

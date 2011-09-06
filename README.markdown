@@ -11,6 +11,7 @@ What?
 
 Snakked is a scala "naked objects" framework, with a twist, great for Rapid Application Development.
 
+
 Naked Objects
 -------------
 
@@ -19,33 +20,17 @@ In Razie's interpretation, what naked objects stands for is direct interaction b
 A naked objects framework should allow for:
 
  - model/domain definition
- - unified access and management interface of (domain) entities
  - simple/default views and interaction
  - some default support for persistency
- - plugin: entity management, interaction etc
  - custom views
+ - unified access and management interface of (domain) entities
+ - plugin: entity management, interaction etc
 
-
-How?
-----
-
-In the sbt Project file for your project (project/build/Project.scala), add the dependency: 
-
-    val snakk = "com.razie" %% "snakked" % "0.1-SNAPSHOT"
-
-If you want to build it, see Building.markdown
-
-
-Roadmap
--------
-
-1. complete the basis: model and inventories
-2. add little bit UI
-3. XP extras and snakking
+The first three are, by now, classic. The others are natural extensions.
 
 
 Snakking
------
+--------
 
 razie.Snakk gives simple methods to suck content from URLs, including files etc in a few formats.
 
@@ -59,9 +44,66 @@ List of blog titles from an XML and JSON feed:
     for (n <- json(url(jsonFeed)) \ "feed" \ "entry" \ "title" \@ "$t") println (n)
     
 
+Roadmap
+-------
+
+ - complete the basis: model and inventories
+ - add little bit UI
+   - basic properties and navigation from mutant
+   - tree
+   - table
+   - graph
+   - full graphical UI
+ - XP extras and snakking
+   - snakk sourcing
+      - snakk java beans (needs testing)
+      - snakk EMF beans
+      - snakk snakks (unify the model here?)
+      - snakk RDB?
+   - snakk views
+      - graph navigation, complete edge implementation
+   - snakk mapping
+ - full workbench
+
+
+Why Snakked?
+------------
+
+Well, it really means
+ - scala naked objects => scala naked => s-naked => snakked (use kk to underline no reptilian dependencies)
+ - funny spelling for snack (~ed), (~ing)
+
+
+How?
+----
+
+In the sbt Project file for your project (project/build/Project.scala), add the dependency: 
+
+    val snakk = "com.razie" %% "snakked" % "0.1-SNAPSHOT"
+
+Snakking:
+1. snakk java beans (done, needs testing)
+2. snakk EMF beans
+3. snakk adapters
+If you want to build it, see Building.markdown
+
+
 Architectural notes
 ===================
 
+
 Snakked and DCI
 -----------------
+
+
+Bits and pieces for the curious
+-------------------------------
+
+You can do a lot better and not waste your time with this section. For the really curious with lots of time on their hands, read on.
+
+Different kinds of keys and unique Ids are in razie.g - I like this: reference an entity by a query or some properties or in some other fuzzy way.
+
+
+
+
 

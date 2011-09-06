@@ -1,5 +1,5 @@
 
-Created first version, for now it depends on razbase, where most of the actual code is...
+Created project structure; for now it depends on razbase, where most of the actual code is...
 
-For now you can Snakk xml and json via razie.XP
+Introduced Snakking with razie.Snakk: you can snakk xml, json and java beans, via razie.XP
 
