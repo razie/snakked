@@ -4,8 +4,7 @@
 Why? So you can easily source and manipulate any data in the major formats, via the major protocols, among others.
 
 
-Snakking
-========
+### Snakking
 
 razie.Snakk gives simple methods to suck content from URLs, including files etc in a few formats.
 

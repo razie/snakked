@@ -12,10 +12,25 @@ What?
 Snakked is a scala "naked objects" framework, with a twist, great for Rapid Application Development.
 
 
+Snakking
+--------
+
+razie.Snakk gives simple methods to suck content from URLs, including files etc in a few formats and then access them in a unified manner, based on an addressing sceheme like XPATH.
+
+List of blog titles from an XML and JSON feed:
+
+    val xmlFeed = "http://feeds.razie.com/Razblog?format=xml"
+    val jsonFeed = "http://blog.razie.com/feeds/posts/default?alt=json"
+
+    for (n <- xml(url(xmlFeed)) \ "channel" \ "item" \ "title") println (n.text)
+
+    for (n <- json(url(jsonFeed)) \ "feed" \ "entry" \ "title" \@ "$t") println (n)
+    
+
 Naked Objects
 -------------
 
-In Razie's interpretation, what naked objects stands for is direct interaction between the users and the domain objects. What the users of an application do is manage the objects and their relationships, directly via generated or custom UIs or via APIs.
+In Razie's interpretation, what naked objects stands for is direct interaction between the users (and developers) and the domain objects. What the users of an application do is manage the objects and their relationships, directly via generated or custom UIs or via APIs.
 
 A naked objects framework should allow for:
 
@@ -28,21 +43,6 @@ A naked objects framework should allow for:
 
 The first three are, by now, classic. The others are natural extensions.
 
-
-Snakking
---------
-
-razie.Snakk gives simple methods to suck content from URLs, including files etc in a few formats.
-
-List of blog titles from an XML and JSON feed:
-
-    val xmlFeed = "http://feeds.razie.com/Razblog?format=xml"
-    val jsonFeed = "http://blog.razie.com/feeds/posts/default?alt=json"
-
-    for (n <- xml(url(xmlFeed)) \ "channel" \ "item" \ "title") println (n.text)
-
-    for (n <- json(url(jsonFeed)) \ "feed" \ "entry" \ "title" \@ "$t") println (n)
-    
 
 Roadmap
 -------
@@ -62,15 +62,16 @@ Roadmap
       - snakk RDB?
    - snakk views
       - graph navigation, complete edge implementation
+      - snakked tree view
    - snakk mapping
  - full workbench
 
 
-Why Snakked?
+Why "Snakked" ?
 ------------
 
 Well, it really means
- - scala naked objects => scala naked => s-naked => snakked (use kk to underline no reptilian dependencies)
+ - scala naked objects => scala naked => s-naked => snakked (use kk to underline the lack of reptilian dependencies)
  - funny spelling for snack (~ed), (~ing)
 
 
@@ -85,7 +86,6 @@ Snakking:
 1. snakk java beans (done, needs testing)
 2. snakk EMF beans
 3. snakk adapters
-If you want to build it, see Building.markdown
 
 
 Architectural notes
@@ -103,7 +103,7 @@ You can do a lot better and not waste your time with this section. For the reall
 
 Different kinds of keys and unique Ids are in razie.g - I like this: reference an entity by a query or some properties or in some other fuzzy way.
 
-
+First draft of the unified access/management interface is in razie.assets - I'm trying to simplify it.
 
 
 
