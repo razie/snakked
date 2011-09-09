@@ -9,6 +9,7 @@ package snakking.test
 import org.junit.Test
 import org.scalatest.junit.MustMatchersForJUnit
 import razie.Snakk
+import org.apache.commons.jxpath.JXPathContext
 
 /**
  * junit tests for the XP stuff
@@ -35,17 +36,21 @@ class SnakkBeanTest extends MustMatchersForJUnit {
 
   val root = Snakk bean new ScalaB("root")
 
-  val school = Snakk bean School("my school",
+  case class Student(name: String, age: Int)
+  case class Class(name: String, students: Student*)
+  case class School(name: String, classes: Class*)
+
+  val jschool = School("my school",
     Class("1st grade",
       Student("Joe", 6),
       Student("Ann", 7)),
     Class("2nd grade",
       Student("Mary", 8),
       Student("George", 7)))
-  
-  @Test def test11 = expect("Ann" :: "George" :: Nil) { school \ "classes" \ "students[age==7]" \@ "name" }
-}
+  val school = Snakk bean jschool
 
-case class Student(name: String, age: Int)
-case class Class(name: String, students: Student*)
-case class School(name: String, classes: Class*)
+  @Test def test11  = expect("Ann" :: "George" :: Nil) { school \ "classes" \ "students[age==7]" \@ "name" }
+  @Test def test12  = expect("Ann" :: "George" :: Nil) { school \** "students[age==7]" \@ "name" }
+  
+//  @Test def tt = expect ("buci") { (JXPathContext.newContext (jschool)).getValue("name")}
+}

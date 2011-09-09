@@ -16,6 +16,7 @@ class SnakkedPro(info: ProjectInfo) extends DefaultProject(info) with posterous.
   def scalatest  = "org.scalatest" % "scalatest_2.9.0" % "1.6.1"
   def junit      = "junit" % "junit" % "4.5" % "test->default"
   def json       = "org.json" % "json" % "20090211"
+  def jxpath     = "commons-jxpath" % "commons-jxpath" % "1.3"
 
   def razBase = "com.razie" %% "razbase"         % RAZBASEVER
 
@@ -24,7 +25,7 @@ class SnakkedPro(info: ProjectInfo) extends DefaultProject(info) with posterous.
   //lazy val ui   = project("ui",   "snakk-ui",   new UiProject(_), core)
 
   class CoreProject(info: ProjectInfo) extends DefaultProject(info) {
-    override def libraryDependencies = Set(scalatest, junit, json, razBase)
+    override def libraryDependencies = Set(scalatest, junit, json, jxpath, razBase)
   }
 
   class WebProject(info: ProjectInfo) extends DefaultProject(info) {

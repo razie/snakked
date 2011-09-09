@@ -1,0 +1,19 @@
+
+You can Snakk beans now
+
+    case class Student(name: String, age: Int)
+    case class Class(name: String, students: Student*)
+    case class School(name: String, classes: Class*)
+
+    val school = Snakk bean School("my school",
+      Class("1st grade",
+        Student("Joe", 6),
+        Student("Ann", 7)),
+      Class("2nd grade",
+        Student("Mary", 8),
+        Student("George", 7)))
+  
+    @Test def test11 = expect("Ann" :: "George" :: Nil) { school \ "classes" \ "students[age==7]" \@ "name" }
+
+You can use recursive matching \** or "**/"
+

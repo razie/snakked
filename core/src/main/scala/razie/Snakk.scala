@@ -38,6 +38,8 @@ object Snakk {
   def str(url: SnakkUrl) = new Wrapper(body(url), StringXpSolver)
 
   def bean(node: Any) = new Wrapper(node, BeanXpSolver)
+  /** if you need to exclude certain methods/fields like generated fields, use some matching rules */
+  def bean(node: Any, excludeMatches:List[String=>Boolean]) = new Wrapper(node, new MyBeanXpSolver(excludeMatches))
 
   def apply(node: JSONObject) = json(node)
   def json(node: JSONObject) = new Wrapper[JsonWrapper](XpJsonSolver.WrapO(node), XpJsonSolver)
@@ -56,6 +58,8 @@ class ListWrapper[T](val nodes: List[T], val ctx: XpSolver[T, Any]) {
   def \\(name: String): T = (this \ name).headOption.get
   /** the list of children two levels down with the respective tag */
   def \*(name: String): ListWrapper[T] = new ListWrapper(nodes.flatMap(n => XP[T]("*/*/" + name).xpl(ctx, n)), ctx)
+  /** the list of children many levels down with the respective tag */
+  def \**(name: String): ListWrapper[T] = new ListWrapper(nodes.flatMap(n => XP[T]("**/" + name).xpl(ctx, n)), ctx)
   /** the head of the list of children two levels down with the respective tag */
   def \\*(name: String): T = (this \* name).headOption.get
   /** the list of attributes with the respective name */
@@ -85,6 +89,8 @@ class Wrapper[T](val node: T, val ctx: XpSolver[T, Any]) {
   def \\(name: String): T = (this \ name).headOption.get
   /** the list of children two levels down with the respective tag */
   def \*(name: String): ListWrapper[T] = new ListWrapper(XP[T]("*/*/" + name).xpl(ctx, node), ctx)
+  /** the list of children many levels down with the respective tag */
+  def \**(name: String): ListWrapper[T] = new ListWrapper(XP[T]("**/" + name).xpl(ctx, node), ctx)
   /** the head of the list of children two levels down with the respective tag */
   def \\*(name: String): T = (this \* name).headOption.get
   /** the attribute with the respective name */
