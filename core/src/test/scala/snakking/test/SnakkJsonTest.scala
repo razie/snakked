@@ -49,7 +49,7 @@ class SnakkJsonTest extends MustMatchersForJUnit {
   @Testme def testw4  = expect ("b1") { wroot \* "*" \ "b" \@@ "value"}
    
   @Testme def testw5  = expect ("c2") { wroot \* "*" \ "c[name=='c2']" \@@ "value"}
-  @Testme def testw5a = expect ("c2") { wroot \** "c[name=='c2']" \@@ "value"}
+  @Testme def testw5a = expect ("c2") { wroot \\ "c[name=='c2']" \@@ "value"}
    
   @Testme def testw6  = expect ("c2") { wroot \* "*" \ "c" \ 1 \@@ "value"}
  

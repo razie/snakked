@@ -43,7 +43,7 @@ Snakking a bean example:
         Student("George", 7)))
 
     @Test def test11 = expect("Ann" :: "George" :: Nil) { school \ "classes" \ "students[age==7]" \@ "name" }
-    @Test def test12 = expect("Ann" :: "George" :: Nil) { school \** "students[age==7]" \@ "name" }
+    @Test def test12 = expect("Ann" :: "George" :: Nil) { school \\ "students[age==7]" \@ "name" }
 
 
 Naked Objects
@@ -102,11 +102,16 @@ In the sbt Project file for your project (project/build/Project.scala), add the 
 
     val snakk = "com.razie" %% "snakked" % "0.2-SNAPSHOT"
 
-Snakking:
+Or Maven style:
 
-1. snakk java beans (done, needs testing)
-2. snakk EMF beans
-3. snakk adapters
+    <dependency>
+        <groupId>com.razie</groupId>
+        <artifactId>snakked_2.9.0-1</artifactId>
+        <version>0.2-SNAPSHOT</version>
+    </dependency>
+
+
+The scala-tools repository is http://scala-tools.org/repo-snapshots/
 
 
 Architectural notes
@@ -122,6 +127,13 @@ No project is a net new invention, all are built on the shoulders of others. Her
  * XCAP  - unified access to configuration in an XPath manner
  * XPATH - well, itself
  * OSS/J - set of OSS through Java standards - based on a nice common generic entity management API
+
+
+Snakking:
+
+1. snakk java beans (done, needs testing)
+2. snakk EMF beans
+3. snakk adapters
 
 
 Snakked and DCI

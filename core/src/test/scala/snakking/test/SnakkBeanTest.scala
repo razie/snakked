@@ -50,7 +50,7 @@ class SnakkBeanTest extends MustMatchersForJUnit {
   val school = Snakk bean jschool
 
   @Test def test11  = expect("Ann" :: "George" :: Nil) { school \ "classes" \ "students[age==7]" \@ "name" }
-  @Test def test12  = expect("Ann" :: "George" :: Nil) { school \** "students[age==7]" \@ "name" }
+  @Test def test12  = expect("Ann" :: "George" :: Nil) { school \\ "students[age==7]" \@ "name" }
   
 //  @Test def tt = expect ("buci") { (JXPathContext.newContext (jschool)).getValue("name")}
 }

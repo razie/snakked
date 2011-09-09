@@ -15,5 +15,10 @@ You can Snakk beans now
   
     @Test def test11 = expect("Ann" :: "George" :: Nil) { school \ "classes" \ "students[age==7]" \@ "name" }
 
-You can use recursive matching \** or "**/"
+You can use recursive matching \\ or "**/"
 
+You can use OR to default attributes:
+
+    val someone:String = (school \ "classes" \ "students[age==7]" \@@ "name") OR ("nobody")
+
+   
