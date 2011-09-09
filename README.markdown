@@ -7,13 +7,13 @@
      */
 
 What?
-=====
+-------
 
 Snakked is a scala "naked objects" framework, with a twist, great for Rapid Application Development.
 
 
 Snakking
---------
+========
 
 razie.Snakk gives simple methods to suck content from URLs, including files etc in a few formats and then access them in a unified manner, based on an addressing sceheme like XPATH.
 
@@ -46,8 +46,28 @@ Snakking a bean example:
     @Test def test12 = expect("Ann" :: "George" :: Nil) { school \\ "students[age==7]" \@ "name" }
 
 
-Naked Objects
+More features
 -------------
+
+The idea of snakking is just rapid sampling of data of all sorts. Here are some, I think cool and helpful, features:
+
+ - Recursivity using the \\ operator
+ - embedded pattern matching operator ~=
+ - fallback attribute sourcing using OR
+ - in XML snakking, if a requested attribute is missing, we'll fallback on the value of a node with the same name, i.e. <x name="tutu" /> can also be <x><name>tutu<name></x> and addressed with x \@ "name"
+
+
+Embedded pattern matching operator: 
+
+    val G = school \\ "students[name~='G.*']" \@@ "name"
+
+OR - fallback (the alternative is not evaluated unless the attribute is null/missing)
+
+    val someone:String = (school \\ "students[age==7]" \@@ "name") OR ("nobody")
+
+
+Naked Objects
+==============
 
 In Razie's interpretation, what naked objects stands for is direct interaction between the users (and developers) and the domain objects. What the users of an application do is manage the objects and their relationships, directly via generated or custom UIs or via APIs.
 
@@ -87,7 +107,7 @@ Roadmap
 
 
 Why "Snakked" ?
-------------
+===============
 
 Well, it really means
 
@@ -112,6 +132,7 @@ Or Maven style:
 
 
 The scala-tools repository is http://scala-tools.org/repo-snapshots/
+
 
 
 Architectural notes
