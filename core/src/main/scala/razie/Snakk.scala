@@ -84,11 +84,11 @@ class ListWrapper[T](val nodes: List[T], val ctx: XpSolver[T, Any]) {
 /** OO wrapper for self-solving XP elements */
 class Wrapper[T](val node: T, val ctx: XpSolver[T, Any]) {
   /** the list of children with the respective tag */
-  def \(name: String): ListWrapper[T] = new ListWrapper(XP[T]("*/" + name).xpl(ctx, node), ctx)
+  def \(name: String): ListWrapper[T] = new ListWrapper(XP[T]( name).xpl(ctx, node), ctx)
   /** the head of the list of children with the respective tag */
   def \\(name: String): T = (this \ name).headOption.get
   /** the list of children two levels down with the respective tag */
-  def \*(name: String): ListWrapper[T] = new ListWrapper(XP[T]("*/*/" + name).xpl(ctx, node), ctx)
+  def \*(name: String): ListWrapper[T] = new ListWrapper(XP[T]("*/" + name).xpl(ctx, node), ctx)
   /** the list of children many levels down with the respective tag */
   def \**(name: String): ListWrapper[T] = new ListWrapper(XP[T]("**/" + name).xpl(ctx, node), ctx)
   /** the head of the list of children two levels down with the respective tag */

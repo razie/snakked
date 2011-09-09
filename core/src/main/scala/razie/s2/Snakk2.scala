@@ -21,7 +21,7 @@ class SnakkUrl(val url: java.net.URL, val attr: AA) {
  * NOTE that snakking will wrap the snacked so you'll need to unwrap at the end, so an expression like
  * { root \ "j" map identity }  is the same as { for ( n <- root \ "j" ) yield n }
  */
-object Snakk {
+object Snakk2 {
   /** build a URL */
   def url(s: String, attr: AA = AA.EMPTY) = new SnakkUrl(new java.net.URL(s), attr)
 

@@ -44,13 +44,14 @@ class SnakkJsonTest extends MustMatchersForJUnit {
        
   @Testme def testw1  = expect ("203") { wroot \@ "errorCode"}
   @Testme def testw2  = expect ("a1") { wroot \ "a" \@@ "value"}
-  @Testme def testw2a = expect ("a1") { wroot \ "*" \@@ "value"}
+  @Testme def testw2b = expect ("a1") { wroot \* "*" \@@ "value"}
   @Testme def testw3  = expect ("b1") { wroot \ "a" \ "b" \@@ "value"}
-  @Testme def testw4  = expect ("b1") { wroot \ "*" \ "b" \@@ "value"}
+  @Testme def testw4  = expect ("b1") { wroot \* "*" \ "b" \@@ "value"}
    
-  @Testme def testw5  = expect ("c2") { wroot \ "*" \ "c[name=='c2']" \@@ "value"}
+  @Testme def testw5  = expect ("c2") { wroot \* "*" \ "c[name=='c2']" \@@ "value"}
+  @Testme def testw5a = expect ("c2") { wroot \** "c[name=='c2']" \@@ "value"}
    
-  @Testme def testw6  = expect ("c2") { wroot \ "*" \ "c" \ 1 \@@ "value"}
+  @Testme def testw6  = expect ("c2") { wroot \* "*" \ "c" \ 1 \@@ "value"}
  
   val wroot = Snakk json json
 }

@@ -8,7 +8,7 @@ package snakking.test
 import razie.{ XP, DomXpSolver }
 import razie.base.data.RazElement._
 import razie.Snakk
-import org.junit._
+import org.junit.Test
 import org.scalatest.junit.MustMatchersForJUnit
 
 /**
@@ -23,7 +23,8 @@ class SnakkXmlTest extends MustMatchersForJUnit {
   @Test def testw43 = expect(List("b1", "b2")) { xxml \ "b" map(x => (x \ "@ba").toString) }
   @Test def testw44 = expect(List("b1", "b2")) { xxml \ "b" \@ "ba"}
   @Test def testw45 = expect(List("c11", "c12", "c13")) { xxml \ "b[@ba=='b1']" \ "c" \@ "ca" }
-  @Test def testw46 = expect(List("b1", "b2")) { xxml \ "*" \@ "ba" }
+  @Test def testw47 = expect(List("c21")) { xxml \** "c[ca=='c21']" \@ "ca" }
+  @Test def testw46 = expect(List("b1", "b2")) { xxml \* "*" \@ "ba" }
 
   val xxml = Snakk (TXXmls.x)
 }
