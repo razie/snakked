@@ -51,10 +51,10 @@ More features
 
 The idea of snakking is just rapid sampling of data of all sorts. Here are some, I think cool and helpful, features:
 
- - Recursivity using the \\ operator
+ - Recursivity using the \\\\ operator
  - embedded pattern matching operator ~=
  - fallback attribute sourcing using OR
- - in XML snakking, if a requested attribute is missing, we'll fallback on the value of a node with the same name, i.e. <x name="tutu" /> can also be <x><name>tutu<name></x> and addressed with x \@ "name"
+ - in XML snakking, if a requested attribute is missing, we'll fallback on the value of a node with the same name
 
 
 Embedded pattern matching operator: 
@@ -64,6 +64,10 @@ Embedded pattern matching operator:
 OR - fallback (the alternative is not evaluated unless the attribute is null/missing)
 
     val someone:String = (school \\ "students[age==7]" \@@ "name") OR ("nobody")
+
+XML attribute fallback
+
+    i.e. <x name="tutu" /> can also be <x><name>tutu<name></x> and addressed with x \@ "name"
 
 
 Naked Objects
