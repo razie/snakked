@@ -43,6 +43,7 @@ Snakking a bean example:
         Student("George", 7)))
 
     @Test def test11 = expect("Ann" :: "George" :: Nil) { school \ "classes" \ "students[age==7]" \@ "name" }
+    @Test def test12 = expect("Ann" :: "George" :: Nil) { school \** "students[age==7]" \@ "name" }
 
 
 Naked Objects
