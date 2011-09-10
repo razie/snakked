@@ -51,10 +51,14 @@ More features
 
 The idea of snakking is just rapid sampling of data of all sorts. Here are some, I think cool and helpful, features:
 
- - Recursivity using the \\\\ operator
+ - Recursivity using the double backslash \\\\ operator
  - embedded pattern matching operator ~=
  - fallback attribute sourcing using OR
  - in XML snakking, if a requested attribute is missing, we'll fallback on the value of a node with the same name
+ - bean snakking 
+  - any field or method (for instance apache jxpath will only look at getters, which is not suiteable for snakking scala code)
+  - custom filters for method names (because of the above) with Snakk.bean (root, filters)
+  - careful when using wildcards and recursivity - it will call all sorts of methods if they're not filtered...
 
 
 Embedded pattern matching operator: 
