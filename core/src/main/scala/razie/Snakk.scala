@@ -114,7 +114,14 @@ object Snakk {
      if (o != null) o else fallback()
    }
    def OR (fallback: =>String) = new DfltStringVal(()=>this.toString, ()=>fallback)
+   
+//   def as[T] (sample:T)(implicit m:Manifest[T]) = {
+//     m match {
+//       case classOf[String]:Manifest => 
+//     }
+//   }
   }
   
   implicit def toD (orig:String) = new DString(orig)
+  implicit def toi (d:DfltStringVal) : Int = Integer.decode(d.toString)
 }
