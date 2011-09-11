@@ -15,10 +15,13 @@ You can Snakk beans now
   
     @Test def test11 = expect("Ann" :: "George" :: Nil) { school \ "classes" \ "students[age==7]" \@ "name" }
 
+Snakking beans is scala-friendly (JXpath won't work on scala classes)
+
 You can use recursive matching \\ or "**/"
 
 You can use OR to default attributes:
 
     val someone:String = (school \ "classes" \ "students[age==7]" \@@ "name") OR ("nobody")
 
+Snakking XMLs will default an attribute not found to the contents of a node with the same name, if found
    

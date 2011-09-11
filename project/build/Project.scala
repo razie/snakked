@@ -10,10 +10,10 @@ class SnakkedPro(info: ProjectInfo) extends DefaultProject(info) with posterous.
       "Scala Tools Nexus" at "http://nexus.scala-tools.org/content/repositories/releases/"
   Credentials(Path.userHome / ".ivy2.credentials", log)
 
-  val SCALAVER = "2.9.0-1"
-  val RAZBASEVER = "0.4-SNAPSHOT"
+  val SCALAVER = "2.9.1"
+  val RAZBASEVER = "0.4" + (if (version.toString endsWith "-SNAPSHOT") "-SNAPSHOT" else "")
 
-  def scalatest  = "org.scalatest" % "scalatest_2.9.0" % "1.6.1"
+  def scalatest  = "org.scalatest" % "scalatest_2.9.1" % "1.6.1"
   def junit      = "junit" % "junit" % "4.5" % "test->default"
   def json       = "org.json" % "json" % "20090211"
   def jxpath     = "commons-jxpath" % "commons-jxpath" % "1.3"

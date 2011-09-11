@@ -134,7 +134,7 @@ Or Maven style:
 
     <dependency>
         <groupId>com.razie</groupId>
-        <artifactId>snakked_2.9.0-1</artifactId>
+        <artifactId>snakked_2.9.1</artifactId>
         <version>0.2-SNAPSHOT</version>
     </dependency>
 
