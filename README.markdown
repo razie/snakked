@@ -46,6 +46,15 @@ Snakking a bean example:
     @Test def test12 = expect("Ann" :: "George" :: Nil) { school \\ "students[age==7]" \@ "name" }
 
 
+Can snakk a bean by type of attribute - in example below we use C3 class name. Useful when you just don't care and want to find a needle in the haystack.
+
+    case class C1 { val c=C2 }
+    case class C2 { val c=C3 }
+    case class C3 { val c="wow" }
+  
+    @Test def test21  = expect("wow" :: Nil) { Snakk.bean(C1) \\ "C3" \@ "c" }
+
+
 More features
 -------------
 
