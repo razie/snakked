@@ -34,12 +34,17 @@ class SnakkBeanTest extends MustMatchersForJUnit {
   @Test def testb = expect("s") { root \ "j" \\* "s" }
   @Test def testc = expect(List("s", "s")) { root \ "j" \* "s" map identity }
 
+  @Test def findByClass1 = expect ("j") { root \ "j" \\\ "String"}
+  @Test def findByClass2 = expect ("s") { root \ "j" \ "JavaA" \\\ "s"}
+  @Test def findByClass3 = expect ("c") { root \\ "C3" \\\ "c"}
+  @Test def findByClass4 = expect ("c") { root \\ "C3" \@@ "c"}
+
   val root = Snakk bean new ScalaB("root")
 
   case class Student(name: String, age: Int)
   case class Class(name: String, students: Student*)
   case class School(name: String, classes: Class*)
-
+  
   val jschool = School("my school",
     Class("1st grade",
       Student("Joe", 6),
@@ -51,6 +56,13 @@ class SnakkBeanTest extends MustMatchersForJUnit {
 
   @Test def test11  = expect("Ann" :: "George" :: Nil) { school \ "classes" \ "students[age==7]" \@ "name" }
   @Test def test12  = expect("Ann" :: "George" :: Nil) { school \\ "students[age==7]" \@ "name" }
+  
+  case class C1 { val c=C2 }
+  case class C2 { val c=C3 }
+  case class C3 { val c="wow" }
+  
+  @Test def test21  = expect("wow" :: Nil) { Snakk.bean(C1) \\ "C3" \@ "c" }
+  
   
 //  @Test def tt = expect ("buci") { (JXPathContext.newContext (jschool)).getValue("name")}
 }

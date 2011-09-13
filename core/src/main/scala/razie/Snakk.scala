@@ -123,5 +123,5 @@ object Snakk {
   }
   
   implicit def toD (orig:String) = new DString(orig)
-  implicit def toi (d:DfltStringVal) : Int = Integer.decode(d.toString)
+  implicit def toi (d:DfltStringVal) : Int = d.toString.toInt
 }

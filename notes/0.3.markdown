@@ -1,0 +1,11 @@
+Limitation: cannot see through collections or arrays so far.
+
+Extended bean parsing by type. I.e. a tag name can be the type name expected. This only works for simple types and not for collections or arrays of type. It uses Class.getSimpleName()
+
+    case class C1 { val c=C2 }
+    case class C2 { val c=C3 }
+    case class C3 { val c="wow" }
+  
+    @Test def test21  = expect("wow" :: Nil) { Snakk.bean(C1) \\ "C3" \@ "c" }
+
+
