@@ -6,8 +6,11 @@ package razie
 
 import org.json.JSONObject
 
+import razie.xp.BeanSolver
+import razie.xp.JsonSolver
 import razie.xp.JsonWrapper
-import razie.xp.XpJsonSolver
+import razie.xp.MyBeanSolver
+import razie.XpSolver
 
 /** wraps an URL with some arguments to be passed in the call */
 class SnakkUrl(val url: java.net.URL, val attr: AA) {
@@ -37,20 +40,20 @@ object Snakk {
   def str(node: String) = new Wrapper(node, StringXpSolver)
   def str(url: SnakkUrl) = new Wrapper(body(url), StringXpSolver)
 
-  def bean(node: Any) = new Wrapper(node, BeanXpSolver)
+  def bean(node: Any) = new Wrapper(node, BeanSolver)
   /** if you need to exclude certain methods/fields like generated fields, use some matching rules */
-  def bean(node: Any, excludeMatches: List[String => Boolean]) = new Wrapper(node, new MyBeanXpSolver(excludeMatches))
+  def bean(node: Any, excludeMatches: List[String => Boolean]) = new Wrapper(node, new MyBeanSolver(excludeMatches))
 
   def apply(node: JSONObject) = json(node)
-  def json(node: JSONObject) = new Wrapper[JsonWrapper](XpJsonSolver.WrapO(node), XpJsonSolver)
-  def json(node: String) = new Wrapper[JsonWrapper](XpJsonSolver.WrapO(new JSONObject(node)), XpJsonSolver)
-  def json(url: SnakkUrl) = new Wrapper[JsonWrapper](XpJsonSolver.WrapO(new JSONObject(body(url))), XpJsonSolver)
+  def json(node: JSONObject) = new Wrapper[JsonWrapper](JsonSolver.WrapO(node), JsonSolver)
+  def json(node: String) = new Wrapper[JsonWrapper](JsonSolver.WrapO(new JSONObject(node)), JsonSolver)
+  def json(url: SnakkUrl) = new Wrapper[JsonWrapper](JsonSolver.WrapO(new JSONObject(body(url))), JsonSolver)
 
   /** this will go to the URL and try to figure out what the url is */
   def apply(node: String) = new Wrapper(node, StringXpSolver)
 
   /** OO wrapper for self-solving XP elements HEY this is like an open monad :) */
-  class ListWrapper[T](val nodes: List[T], val ctx: XpSolver[T, Any]) {
+  class ListWrapper[T](val nodes: List[T], val ctx: XpSolver[T]) {
     /** the list of children with the respective tag */
     def \(name: String): ListWrapper[T] = new ListWrapper(nodes.flatMap(n => XP[T]("*/" + name).xpl(ctx, n)), ctx)
     /** the head of the list of children with the respective tag */
@@ -83,7 +86,7 @@ object Snakk {
   }
 
   /** OO wrapper for self-solving XP elements */
-  class Wrapper[T](val node: T, val ctx: XpSolver[T, Any]) {
+  class Wrapper[T](val node: T, val ctx: XpSolver[T]) {
     /** the list of children with the respective tag */
     def \(name: String): ListWrapper[T] = new ListWrapper(XP[T](name).xpl(ctx, node), ctx)
     /** the head of the list of children with the respective tag */
