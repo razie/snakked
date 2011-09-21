@@ -65,9 +65,9 @@ object Snakk {
     /** the head of the list of children two levels down with the respective tag */
     def \\*(name: String): T = (this \* name).headOption.get
     /** the list of attributes with the respective name */
-    def \@(name: String): List[String] = nodes map (n => XP[T](if (name.startsWith("@")) name else "@" + name).xpa(ctx, n))
+    def \@(name: String): List[String] = nodes map (n => XP[T](if (name.contains("@")) name else "@" + name).xpa(ctx, n))
     /** the single attributes with the respective name */
-    def \@@(name: String): String = nodes.headOption.map(n => XP[T](if (name.startsWith("@")) name else "@" + name).xpa(ctx, n)) getOrElse null
+    def \@@(name: String): String = nodes.headOption.map(n => XP[T](if (name.contains("@")) name else "@" + name).xpa(ctx, n)) getOrElse null
 
     def apply(i: Int) = new Wrapper(nodes.apply(i), ctx)
     def \(i: Int) = new Wrapper(nodes.apply(i), ctx)
@@ -98,7 +98,7 @@ object Snakk {
     /** the head of the list of children two levels down with the respective tag */
     def \\*(name: String): T = (this \* name).headOption.get
     /** the attribute with the respective name */
-    def \@(name: String): String = XP[T](if (name.startsWith("@")) name else "@" + name).xpa(ctx, node)
+    def \@(name: String): String = XP[T](if (name.contains("@")) name else "@" + name).xpa(ctx, node)
     /** the single attributes with the respective name */
     def \@@(name: String): String = this \@ name
 
