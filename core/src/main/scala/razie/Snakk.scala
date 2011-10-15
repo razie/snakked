@@ -30,7 +30,12 @@ object Snakk {
   def url(s: String, attr: AA = AA.EMPTY) = new SnakkUrl(new java.net.URL(s), attr)
 
   /** retrieve the content from URL, as String */
-  def body(url: SnakkUrl) = com.razie.pub.comms.Comms.readUrl(url.url.toString, url.attr)
+  def body(url: SnakkUrl) = Option(com.razie.pub.comms.Comms.readUrl(url.url.toString, url.attr)).getOrElse("")
+  /** retrieve the content from URL, as String and strip html wrappers, leave just body */
+  def htmlBody(url: SnakkUrl) = {
+    val b = body(url)
+    Option(b).map(_.replaceFirst("^.*<body[^>]*>","")).map(_.replaceFirst("</body[^>]*>.*$","")).getOrElse("")
+  }
 
   def apply(node: scala.xml.Elem) = xml(node)
   def xml(node: scala.xml.Elem) = new Wrapper(node, ScalaDomXpSolver)
