@@ -2,7 +2,8 @@ import sbt._
 import Keys._
 
 object V {
-  val version      = "0.3-SNAPSHOT"
+  //val version      = "0.3-SNAPSHOT"
+  val version      = "0.3"
   val scalaVersion = "2.9.1"
   val organization = "com.razie"
 
@@ -23,7 +24,7 @@ object MyBuild extends Build {
 
   lazy val root = Project(id="snakked",    base=file("."),
                           settings = defaultSettings ++ Seq()
-                  ) aggregate (core)
+                  ) aggregate (core) dependsOn (core)
 
   lazy val core = Project(id="snakk-core", base=file("core"),
                           settings = defaultSettings ++ 
@@ -31,13 +32,19 @@ object MyBuild extends Build {
                   )
 
   def defaultSettings = baseSettings ++ Seq()
+
   def baseSettings = Defaults.defaultSettings ++ Seq (
     scalaVersion := V.scalaVersion,
     version      := V.version,
-    organization := V.organization,
-    organizationName := "Razie's Pub",
+
+    organization         := V.organization,
+    organizationName     := "Razie's Pub",
     organizationHomepage := Some(url("http://www.razie.com")),
+
+    resolvers += ScalaToolsSnapshots,
+
     credentials += Credentials((Path.userHome / ".ivy2.credentials").asFile),
+
     publishTo <<= version { (v: String) =>
       if(v endsWith "-SNAPSHOT")
         Some ("Scala Tools Nexus" at "http://nexus.scala-tools.org/content/repositories/snapshots/")

@@ -8,4 +8,5 @@ Extended bean parsing by type. I.e. a tag name can be the type name expected. Th
   
     @Test def test21  = expect("wow" :: Nil) { Snakk.bean(C1) \\ "C3" \@ "c" }
 
+updated to sbt 0.11
 
