@@ -46,9 +46,9 @@ object MyBuild extends Build {
 
     publishTo <<= version { (v: String) =>
       if(v endsWith "-SNAPSHOT")
-        Some ("Scala Tools Nexus" at "http://nexus.scala-tools.org/content/repositories/snapshots/")
+        Some ("Sonatype" at "https://oss.sonatype.org/content/repositories/snapshots/")
       else
-        Some ("Scala Tools Nexus" at "http://nexus.scala-tools.org/content/repositories/releases/")
+        Some ("Sonatype" at "https://oss.sonatype.org/content/repositories/releases/")
     }  )
 
 }
