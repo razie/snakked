@@ -33,16 +33,11 @@ object MyBuild extends Build {
   def defaultSettings = baseSettings ++ Seq()
 
   def baseSettings = Defaults.defaultSettings ++ Seq (
-    scalaVersion := V.scalaVersion,
-    version      := V.version,
-
+    scalaVersion         := V.scalaVersion,
+    version              := V.version,
     organization         := V.organization,
     organizationName     := "Razie's Pub",
     organizationHomepage := Some(url("http://www.razie.com")),
-
-    resolvers += ScalaToolsSnapshots,
-
-    credentials += Credentials((Path.userHome / ".ivy2.credentials").asFile),
 
     publishTo <<= version { (v: String) =>
       if(v endsWith "-SNAPSHOT")
