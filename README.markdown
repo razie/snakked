@@ -18,6 +18,7 @@ Snakking
 razie.Snakk gives simple methods to suck content from URLs, including files etc in a few formats and then access them in a unified manner, based on an addressing sceheme like XPATH.
 
 List of blog titles from an XML and JSON feed:
+    import razie.Snakk._
 
     val xmlFeed  = url ("http://feeds.razie.com/Razblog?format=xml")
     val jsonFeed = url ("http://blog.razie.com/feeds/posts/default?alt=json")
@@ -30,7 +31,11 @@ You can easily read from an HTTP POST as well as the GET above:
 
     val xmlFeed  = url ("http://feeds.razie.com/Razblog?format=xml", razie.AA("field1"->"f1"), "POST")
 
-See more examples in core/src/test
+If you only want to get the body of the server response, wihtout the XPATH wrappers, then
+
+    val response = body(xmlFeed)
+
+See more examples in core/src/test - some are copied below:
 
 Snakking a bean example:
 
