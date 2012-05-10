@@ -26,6 +26,10 @@ List of blog titles from an XML and JSON feed:
 
     for (n <- json(jsonFeed) \ "feed" \ "entry" \ "title" \@ "$t") println (n)
 
+You can easily read from an HTTP POST as well as the GET above:
+
+    val xmlFeed  = url ("http://feeds.razie.com/Razblog?format=xml", razie.AA("field1"->"f1"), "POST")
+
 See more examples in core/src/test
 
 Snakking a bean example:

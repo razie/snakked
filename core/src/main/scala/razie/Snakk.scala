@@ -5,15 +5,15 @@
 package razie
 
 import org.json.JSONObject
-
 import razie.xp.BeanSolver
 import razie.xp.JsonSolver
 import razie.xp.JsonWrapper
 import razie.xp.MyBeanSolver
 import razie.XpSolver
+import com.razie.pub.comms.Comms
 
 /** wraps an URL with some arguments to be passed in the call */
-class SnakkUrl(val url: java.net.URL, val attr: AA) {
+class SnakkUrl(val url: java.net.URL, val attr: AA, val method:String="GET") {
   /** transform this URL in one with basic authentication */
   def basic(user: String, password: String) =
     new SnakkUrl(url, attr ++ AA("Authorization", "Basic " + new sun.misc.BASE64Encoder().encode((user + ":" + password).getBytes)))
@@ -27,10 +27,16 @@ class SnakkUrl(val url: java.net.URL, val attr: AA) {
  */
 object Snakk {
   /** build a URL */
-  def url(s: String, attr: AA = AA.EMPTY) = new SnakkUrl(new java.net.URL(s), attr)
+  def url(s: String, attr: AA = AA.EMPTY, method:String="GET") = new SnakkUrl(new java.net.URL(s), attr, method)
 
+  
   /** retrieve the content from URL, as String */
-  def body(url: SnakkUrl) = Option(com.razie.pub.comms.Comms.readUrl(url.url.toString, url.attr)).getOrElse("")
+  def body(url: SnakkUrl) = url.method match {
+    case "GET" => Option(Comms.readUrl(url.url.toString, url.attr)).getOrElse("")
+    case "POST" =>Option(Comms.readStream(Comms.xpoststreamUrl2(url.url.toString, url.attr, ""))).getOrElse("")
+    case x@_ => throw new IllegalArgumentException ("unknown URL method: "+x)
+  }
+  
   /** retrieve the content from URL, as String and strip html wrappers, leave just body */
   def htmlBody(url: SnakkUrl) = {
     val b = body(url)
@@ -40,7 +46,7 @@ object Snakk {
   def apply(node: scala.xml.Elem) = xml(node)
   def xml(node: scala.xml.Elem) = new Wrapper(node, ScalaDomXpSolver)
   def xml(body: String) = new Wrapper(scala.xml.XML.load(body), ScalaDomXpSolver)
-  def xml(url: SnakkUrl) = new Wrapper(scala.xml.XML.load(url.url), ScalaDomXpSolver) // TODO use AA for auth
+  def xml(url: SnakkUrl) = new Wrapper(scala.xml.XML.load(body(url)), ScalaDomXpSolver) // TODO use AA for auth
 
   def str(node: String) = new Wrapper(node, StringXpSolver)
   def str(url: SnakkUrl) = new Wrapper(body(url), StringXpSolver)
