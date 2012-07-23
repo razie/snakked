@@ -17,5 +17,5 @@ List of blog titles from an XML and JSON feed:
 
     for (n <- json(jsonFeed) \ "feed" \ "entry" \ "title" \@ "$t") println (n)
 
-
+Going even furher, if you add some semantics to a wiki domain, you can also use this to do some wiki-surfing...
 
