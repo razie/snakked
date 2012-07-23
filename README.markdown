@@ -146,14 +146,14 @@ How?
 
 In the sbt Project file for your project (project/build/Project.scala), add the dependency: 
 
-    val snakk = "com.razie" %% "snakked" % "0.4-SNAPSHOT"
+    val snakk = "com.razie" %% "snakked" % "0.4.3-SNAPSHOT"
 
 Or Maven style:
 
     <dependency>
         <groupId>com.razie</groupId>
         <artifactId>snakked_2.9.1</artifactId>
-        <version>0.4-SNAPSHOT</version>
+        <version>0.4.3-SNAPSHOT</version>
     </dependency>
 
 
