@@ -8,7 +8,7 @@ object V {
 
   def snap = (if (V.version endsWith "-SNAPSHOT") "-SNAPSHOT" else "")
 
-  def RAZBASEVER = "0.6.2" + snap
+  def RAZBASEVER = "0.6.3" + snap
 }
 
 object MyBuild extends Build {
@@ -45,6 +45,10 @@ object MyBuild extends Build {
         Some ("Sonatype" at "https://oss.sonatype.org/content/repositories/snapshots/")
       else
         Some ("Sonatype" at "https://oss.sonatype.org/content/repositories/releases/")
-    }  )
+    } ,
+
+    resolvers ++= Seq("snapshots" at "http://oss.sonatype.org/content/repositories/snapshots",
+                      "releases"  at "http://oss.sonatype.org/content/repositories/releases") 
+    )
 
 }
