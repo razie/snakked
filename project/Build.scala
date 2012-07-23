@@ -2,13 +2,13 @@ import sbt._
 import Keys._
 
 object V {
-  val version      = "0.4-SNAPSHOT"
+  val version      = "0.4.3-SNAPSHOT"
   val scalaVersion = "2.9.1"
   val organization = "com.razie"
 
   def snap = (if (V.version endsWith "-SNAPSHOT") "-SNAPSHOT" else "")
 
-  def RAZBASEVER = "0.6" + snap
+  def RAZBASEVER = "0.6.2" + snap
 }
 
 object MyBuild extends Build {
@@ -18,7 +18,8 @@ object MyBuild extends Build {
   def json      = "org.json"       % "json"            % "20090211"
   def jxpath    = "commons-jxpath" % "commons-jxpath"  % "1.3"
   
-  def razBase = "com.razie" %% "razbase"         % V.RAZBASEVER
+  def razBase   = "com.razie"     %% "base"            % V.RAZBASEVER
+  def razWeb    = "com.razie"     %% "razweb"          % V.RAZBASEVER
 
 
   lazy val root = Project(id="snakked",    base=file("."),
@@ -27,7 +28,7 @@ object MyBuild extends Build {
 
   lazy val core = Project(id="snakk-core", base=file("core"),
                           settings = defaultSettings ++ 
-                          Seq(libraryDependencies ++= Seq(scalatest, junit, json, jxpath, razBase))
+                          Seq(libraryDependencies ++= Seq(scalatest, junit, json, jxpath, razBase, razWeb))
                   )
 
   def defaultSettings = baseSettings ++ Seq()

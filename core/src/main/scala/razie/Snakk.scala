@@ -9,7 +9,6 @@ import razie.xp.BeanSolver
 import razie.xp.JsonSolver
 import razie.xp.JsonWrapper
 import razie.xp.MyBeanSolver
-import razie.XpSolver
 import com.razie.pub.comms.Comms
 
 /** wraps an URL with some arguments to be passed in the call */
@@ -65,23 +64,29 @@ object Snakk {
 
   /** OO wrapper for self-solving XP elements HEY this is like an open monad :) */
   class ListWrapper[T](val nodes: List[T], val ctx: XpSolver[T]) {
+    /** factory method - overwrite with yours*/
+    def wrapList (nodes:List[T], ctx:XpSolver[T]) = new ListWrapper(nodes, ctx)
+    def wrapNode (node:T, ctx:XpSolver[T]) = new Wrapper(node, ctx)
+    
     /** the list of children with the respective tag */
-    def \(name: String): ListWrapper[T] = new ListWrapper(nodes.flatMap(n => XP[T]("*/" + name).xpl(ctx, n)), ctx)
+    def \(name: String): ListWrapper[T] = wrapList(nodes.flatMap(n => XP[T]("*/" + name).xpl(ctx, n)), ctx)
     /** the head of the list of children with the respective tag */
     def \\\(name: String): T = (this \ name).headOption.get
     /** the list of children two levels down with the respective tag */
-    def \*(name: String): ListWrapper[T] = new ListWrapper(nodes.flatMap(n => XP[T]("*/*/" + name).xpl(ctx, n)), ctx)
+    def \*(name: String): ListWrapper[T] = wrapList(nodes.flatMap(n => XP[T]("*/*/" + name).xpl(ctx, n)), ctx)
     /** the list of children many levels down with the respective tag */
-    def \\(name: String): ListWrapper[T] = new ListWrapper(nodes.flatMap(n => XP[T]("**/" + name).xpl(ctx, n)), ctx)
+    def \\(name: String): ListWrapper[T] = wrapList(nodes.flatMap(n => XP[T]("**/" + name).xpl(ctx, n)), ctx)
     /** the head of the list of children two levels down with the respective tag */
     def \\*(name: String): T = (this \* name).headOption.get
     /** the list of attributes with the respective name */
     def \@(name: String): List[String] = nodes map (n => XP[T](if (name.contains("@")) name else "@" + name).xpa(ctx, n))
     /** the single attributes with the respective name */
     def \@@(name: String): String = nodes.headOption.map(n => XP[T](if (name.contains("@")) name else "@" + name).xpa(ctx, n)) getOrElse null
+    /** the attributeS with the respective name */
+    def \\@(name: String): List[String] = nodes.flatMap(n => XP[T](if (name.contains("@")) name else "@" + name).xpla(ctx, n))
 
-    def apply(i: Int) = new Wrapper(nodes.apply(i), ctx)
-    def \(i: Int) = new Wrapper(nodes.apply(i), ctx)
+    def apply(i: Int) = wrapNode(nodes.apply(i), ctx)
+    def \(i: Int) = wrapNode(nodes.apply(i), ctx)
 
     def foreach[B](f: T => B): Unit = nodes.foreach(f)
     def map[B](f: T => B): List[B] = nodes.map(f)
@@ -98,20 +103,26 @@ object Snakk {
 
   /** OO wrapper for self-solving XP elements */
   class Wrapper[T](val node: T, val ctx: XpSolver[T]) {
+    /** factory method - overwrite with yours*/
+    def wrapList (nodes:List[T], ctx:XpSolver[T]) = new ListWrapper(nodes, ctx)
+    def wrapNode (node:T, ctx:XpSolver[T]) = new Wrapper(node, ctx)
+
     /** the list of children with the respective tag */
-    def \(name: String): ListWrapper[T] = new ListWrapper(XP[T](name).xpl(ctx, node), ctx)
+    def \(name: String): ListWrapper[T] = wrapList(XP[T](name).xpl(ctx, node), ctx)
     /** the head of the list of children with the respective tag */
     def \\\(name: String): T = (this \ name).headOption.get
     /** the list of children two levels down with the respective tag */
-    def \*(name: String): ListWrapper[T] = new ListWrapper(XP[T]("*/" + name).xpl(ctx, node), ctx)
+    def \*(name: String): ListWrapper[T] = wrapList(XP[T]("*/" + name).xpl(ctx, node), ctx)
     /** the list of children many levels down with the respective tag */
-    def \\(name: String): ListWrapper[T] = new ListWrapper(XP[T]("**/" + name).xpl(ctx, node), ctx)
+    def \\(name: String): ListWrapper[T] = wrapList(XP[T]("**/" + name).xpl(ctx, node), ctx)
     /** the head of the list of children two levels down with the respective tag */
     def \\*(name: String): T = (this \* name).headOption.get
     /** the attribute with the respective name */
     def \@(name: String): String = XP[T](if (name.contains("@")) name else "@" + name).xpa(ctx, node)
     /** the single attributes with the respective name */
     def \@@(name: String): String = this \@ name
+    /** the attributeS with the respective name */
+    def \\@(name: String): List[String] = XP[T](if (name.contains("@")) name else "@" + name).xpla(ctx, node)
 
     override def toString = Option(node).map(_.toString).toString
   }

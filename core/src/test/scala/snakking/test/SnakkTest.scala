@@ -17,7 +17,7 @@ class SnakkTest extends MustMatchersForJUnit {
       for (n <- json(url("http://blog.razie.com/feeds/posts/default?alt=json")) \ "feed" \ "entry" \ "title" \@ "$t")
         yield (n)
 
-    println((xnames.sort(_ > _) zip jnames.sort(_ > _)).mkString("\n"))
+    println((xnames.sortWith(_ > _) zip jnames.sortWith(_ > _)).mkString("\n"))
 
     if (razie.M.equals(xnames, jnames)(_ == _)) { println("OK"); true }
     else { println("OOPS"); false }
