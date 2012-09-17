@@ -92,6 +92,14 @@ XML attribute fallback
     i.e. <x name="tutu" /> can also be <x><name>tutu<name></x> and addressed with x \@ "name"
 
 
+Uses and articles
+==============
+
+This article can shed more details on other uses of snakked: http://blog.razie.com/2012/05/free-flowing-wiki-domain-models-and.html
+
+Snakked is used in http://www.racerkidz.com
+
+
 Naked Objects
 ==============
 
