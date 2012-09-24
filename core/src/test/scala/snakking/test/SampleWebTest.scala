@@ -83,11 +83,11 @@ class SampleTestWiki extends FlatSpec with ShouldMatchers with UrlTester {
   "/wikie/edit/Blog:Razie's_Enduro_Blog".s400
 
   // joe can edit his note
-  ("/wikie/edit/Note:Joe's private note", "joe@doe.com", "pass") sok "edit"
+  ("/wikie/edit/Note:Joe's private note", "john@doe.com", "pass") sok "edit"
   
   // make sure basic auth works - these should fail
-  ("/wikie/edit/Note:Joe's private note", "Xjoe@doe.com", "pass").s400
-  ("/wikie/edit/Note:Joe's private note", "joe@doe.com", "Xpass").s400
+  ("/wikie/edit/Note:Joe's private note", "Xjohn@doe.com", "pass").s400
+  ("/wikie/edit/Note:Joe's private note", "john@doe.com", "Xpass").s400
 }
 
 /** sample perf test */
@@ -96,7 +96,7 @@ class SampleTestPerf extends FlatSpec with ShouldMatchers with UrlTester {
 
   "site" should "be fast" in {
     razie.Threads.forkjoin(0 to 100) { i =>
-      ((0 to 10) map { x => "/wiki/Blog:Razie's_Enduro_School".w contains "dirt bike" }).exists(identity)
+      ((0 to 10) map { x => "/".w contains "home" }).exists(identity)
     }.exists(p => !p.isDefined || !p.get) === true
   }
 }
