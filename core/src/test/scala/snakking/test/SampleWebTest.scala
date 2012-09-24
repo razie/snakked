@@ -71,23 +71,24 @@ class SampleTestWiki extends FlatSpec with ShouldMatchers with UrlTester {
 
   // home page visible
   "/" sok "home"
-  
+
   // admin not reacheable
   "/admin".s400
 
   //  "special admin topics" should "not be listed" in {
-  "/wiki/Category:Admin" snok "urlmap"
+  "/wiki/list/Admin" snok "urlmap"
 
   // anyone can see a blog but not edit it
-  "/wiki/Blog:Razie's_Enduro_Blog" sok "dirt bike"
-  "/wikie/edit/Blog:Razie's_Enduro_Blog".s400
+  "/wiki/Enduro_Blog" sok "dirt bike"
+  "/wikie/edit/Enduro_Blog".s400
 
   // joe can edit his note
-  ("/wikie/edit/Note:Joe's private note", "john@doe.com", "pass") sok "edit"
-  
-  // make sure basic auth works - these should fail
-  ("/wikie/edit/Note:Joe's private note", "Xjohn@doe.com", "pass").s400
-  ("/wikie/edit/Note:Joe's private note", "john@doe.com", "Xpass").s400
+  ("/wikie/edit/Joe's private note", "john@doe.com", "pass") sok "edit"
+
+  "basic auth" should "fail sometimes" in {
+    ("/wikie/edit/Joe's private note", "Xjohn@doe.com", "pass").e400
+    ("/wikie/edit/Joe's private note", "john@doe.com", "Xpass").e400
+  }
 }
 
 /** sample perf test */
