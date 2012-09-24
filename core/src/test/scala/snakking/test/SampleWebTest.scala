@@ -83,11 +83,11 @@ class SampleTestWiki extends FlatSpec with ShouldMatchers with UrlTester {
   "/wikie/edit/Enduro_Blog".s400
 
   // joe can edit his note
-  ("/wikie/edit/Joe's private note", "john@doe.com", "pass") sok "edit"
+  ("/wikie/edit/Joe's_private_note", "john@doe.com", "pass") sok "edit"
 
   "basic auth" should "fail sometimes" in {
-    ("/wikie/edit/Joe's private note", "Xjohn@doe.com", "pass").e400
-    ("/wikie/edit/Joe's private note", "john@doe.com", "Xpass").e400
+    ("/wikie/edit/Joe's_private_note", "Xjohn@doe.com", "pass").e400
+    ("/wikie/edit/Joe's_private_note", "john@doe.com", "Xpass").e400
   }
 }
 
