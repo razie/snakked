@@ -2,18 +2,18 @@ import sbt._
 import Keys._
 
 object V {
-  val version      = "0.4.3-SNAPSHOT"
-  val scalaVersion = "2.9.1"
+  val version      = "0.6.4-SNAPSHOT"
+  val scalaVersion = "2.10.0" // "2.9.1"
   val organization = "com.razie"
 
   def snap = (if (V.version endsWith "-SNAPSHOT") "-SNAPSHOT" else "")
 
-  def RAZBASEVER = "0.6.3" + snap
+  def RAZBASEVER = "0.6.4" + snap
 }
 
 object MyBuild extends Build {
 
-  def scalatest = "org.scalatest"  % "scalatest_2.9.1" % "1.6.1"
+  def scalatest = "org.scalatest"  % "scalatest_2.10.0" % "1.8"
   def junit     = "junit"          % "junit"           % "4.5"      % "test->default"
   def json      = "org.json"       % "json"            % "20090211"
   def jxpath    = "commons-jxpath" % "commons-jxpath"  % "1.3"
