@@ -165,6 +165,16 @@ Or Maven style:
     </dependency>
 
 
+Dictionary
+==========
+
+Here's the lowdown on the upmove:
+
+snakk, snakking - refers to the actual action of snakking, getting bits of information from a source
+
+snakker - an expression which can snakk some information
+
+snakked - as in "Smile, you've been snakked"
 
 
 Architectural notes
