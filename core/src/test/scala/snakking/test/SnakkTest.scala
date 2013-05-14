@@ -34,7 +34,7 @@ class SnakkTest extends MustMatchersForJUnit {
         case _: java.io.FileNotFoundException => true
         case _ => false
       }
-      case _ => false
+      case _:Throwable => false
     }
   }
 }

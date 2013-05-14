@@ -28,7 +28,6 @@ object Snakk {
   /** build a URL */
   def url(s: String, attr: AA = AA.EMPTY, method:String="GET") = new SnakkUrl(new java.net.URL(s), attr, method)
 
-  
   /** retrieve the content from URL, as String */
   def body(url: SnakkUrl) = url.method match {
     case "GET" => Option(Comms.readUrl(url.url.toString, url.attr)).getOrElse("")
@@ -42,21 +41,30 @@ object Snakk {
     Option(b).map(_.replaceFirst("^.*<body[^>]*>","")).map(_.replaceFirst("</body[^>]*>.*$","")).getOrElse("")
   }
 
+  /** snakk a DOM parsed already */
   def apply(node: scala.xml.Elem) = xml(node)
+  /** snakk a DOM parsed already */
   def xml(node: scala.xml.Elem) = new Wrapper(node, ScalaDomXpSolver)
+  /** snakk an XML contained in a String */
   def xml(body: String) = new Wrapper(scala.xml.XML.load(body), ScalaDomXpSolver)
+  /** snakk an XML coming from an URL */
   def xml(url: SnakkUrl) = new Wrapper(scala.xml.XML.load(body(url)), ScalaDomXpSolver) // TODO use AA for auth
 
   def str(node: String) = new Wrapper(node, StringXpSolver)
   def str(url: SnakkUrl) = new Wrapper(body(url), StringXpSolver)
 
+  /** snakk a bean */
   def bean(node: Any) = new Wrapper(node, BeanSolver)
   /** if you need to exclude certain methods/fields like generated fields, use some matching rules */
   def bean(node: Any, excludeMatches: List[String => Boolean]) = new Wrapper(node, new MyBeanSolver(excludeMatches))
 
+  /** snakk a parsed JSON document */
   def apply(node: JSONObject) = json(node)
+  /** snakk a parsed JSON document */
   def json(node: JSONObject) = new Wrapper[JsonWrapper](JsonSolver.WrapO(node), JsonSolver)
+  /** snakk a JSON document contained in the String */
   def json(node: String) = new Wrapper[JsonWrapper](JsonSolver.WrapO(new JSONObject(node)), JsonSolver)
+  /** snakk a JSON document coming from an URL */
   def json(url: SnakkUrl) = new Wrapper[JsonWrapper](JsonSolver.WrapO(new JSONObject(body(url))), JsonSolver)
 
   /** this will go to the URL and try to figure out what the url is */
@@ -68,6 +76,10 @@ object Snakk {
     def wrapList (nodes:List[T], ctx:XpSolver[T]) = new ListWrapper(nodes, ctx)
     def wrapNode (node:T, ctx:XpSolver[T]) = new Wrapper(node, ctx)
     
+    def xpl  (path:String) = nodes.flatMap(n => XP[T](path).xpl(ctx, n))
+    def xpa  (path:String) = nodes.headOption.map(n => XP[T](path).xpa(ctx, n))
+    def xpla (path:String) = nodes.flatMap(n => XP[T](path).xpla(ctx, n))
+
     /** the list of children with the respective tag */
     def \(name: String): ListWrapper[T] = wrapList(nodes.flatMap(n => XP[T]("*/" + name).xpl(ctx, n)), ctx)
     /** the head of the list of children with the respective tag */
@@ -107,6 +119,10 @@ object Snakk {
     def wrapList (nodes:List[T], ctx:XpSolver[T]) = new ListWrapper(nodes, ctx)
     def wrapNode (node:T, ctx:XpSolver[T]) = new Wrapper(node, ctx)
 
+    def xpl  (path:String) = XP[T](path).xpl(ctx, node)
+    def xpa  (path:String) = XP[T](path).xpa(ctx, node)
+    def xpla (path:String) = XP[T](path).xpla(ctx, node)
+    
     /** the list of children with the respective tag */
     def \(name: String): ListWrapper[T] = wrapList(XP[T](name).xpl(ctx, node), ctx)
     /** the head of the list of children with the respective tag */

@@ -27,12 +27,14 @@ class SnakkBeanTest extends MustMatchersForJUnit {
   @Test def test6 = expect(List(new JavaB("j"))) { root \ "j" map identity }
   @Test def test7 = expect(List(new JavaB("a"), new JavaB("b"))) { root \ "l" map identity }
 
-  @Test def test8 = expect("a") { root \ "l[value=='a']" \@@ "value" }
-  @Test def test9 = expect(List("a", "b")) { root \ "l" \@ "value" }
-  @Test def test0 = expect("s") { root \ "j" \ "a" \\\ "s" }
-  @Test def testa = expect("s") { root \ "j" \@@ "s" }
-  @Test def testb = expect("s") { root \ "j" \\* "s" }
-  @Test def testc = expect(List("s", "s")) { root \ "j" \* "s" map identity }
+  @Test def test8  = expect("a") { root \ "l[value=='a']" \@@ "value" }
+  @Test def test8a = expect("a") { root \@ "l[value=='a']/@value" }
+  @Test def test9  = expect(List("a", "b")) { root \ "l" \@ "value" }
+  @Test def test9a = expect(List("a", "b")) { root \@ "l/@value" }
+  @Test def test0  = expect("s") { root \ "j" \ "a" \\\ "s" }
+  @Test def testa  = expect("s") { root \ "j" \@@ "s" }
+  @Test def testb  = expect("s") { root \ "j" \\* "s" }
+  @Test def testc  = expect(List("s", "s")) { root \ "j" \* "s" map identity }
 
   @Test def findByClass1 = expect ("j") { root \ "j" \\\ "String"}
   @Test def findByClass2 = expect ("s") { root \ "j" \ "JavaA" \\\ "s"}
