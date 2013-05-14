@@ -2,74 +2,13 @@ package snakking.test
 
 import org.scalatest.FlatSpec
 import org.scalatest.matchers.ShouldMatchers
-import com.razie.pub.comms.CommRtException
 
-/** make up unique IDs for scalatest's test names */
-object TestHelper {
-  var thou = 1000
-  def uniq = System.currentTimeMillis().toString + "-" + { thou = (thou + 1) % 1000; thou }.toString
-}
-
-/** helper trait - include this to get the url constructs */
-trait UrlTester { self: FlatSpec with ShouldMatchers =>
-  import TestHelper._
-
-  /** helper class, will add the test methods */
-  case class MyString(s: String, basic: Option[(String, String)] = None) {
-    def w(implicit hostport: String): String = {
-      import razie.Snakk
-
-      val u = Snakk.url("http://" + hostport + s)
-      val uu = basic.map(x => u.basic(x._1, x._2)).getOrElse(u)
-      val bod = Snakk.body(uu)
-      bod
-    }
-
-    /** should matcher - url access fails */
-    def e400(implicit hostport: String) = {
-      evaluating { this.w } should produce[CommRtException]
-    }
-
-    /** should case - url access fails */
-    def s400(implicit hostport: String) = {
-      uniq + s should "not be visible" in {
-        evaluating { this.w } should produce[CommRtException]
-      }
-    }
-
-    /** should case - url access ok, contains string */
-    def sok(incl: String)(implicit hostport: String) = {
-      uniq + s should "be visible" in {
-        this.w should include(incl)
-      }
-    }
-
-    /** should case - url access ok, NOT contains string */
-    def snok(incl: String)(implicit hostport: String) = {
-      uniq + s should "be visible but exclude " + incl in {
-        this.w should not include (incl)
-      }
-    }
-
-    /** should matcher - url access ok, contains string */
-    def eok(incl: String)(implicit hostport: String) = {
-      this.w should include(incl)
-    }
-
-    /** should matcher - url access ok, NOT contains string */
-    def enok(incl: String)(implicit hostport: String) = {
-      this.w should not include (incl)
-    }
-  }
-
-  implicit def toMyString(s: String) = MyString(s)
-  implicit def toMyString2(s: (String, String, String)) = MyString(s._1, Some(s._2, s._3))
-}
-
-class SampleTestWiki extends FlatSpec with ShouldMatchers with UrlTester {
+/** sample url tests */
+class SampleTestWiki extends FlatSpec with ShouldMatchers with razie.UrlTester {
+  // needs a host/port to target in this test
   implicit val hostport = "localhost:9000"
 
-  // home page visible
+  // home page visible - also contains the text "home"
   "/" sok "home"
 
   // admin not reacheable
@@ -85,14 +24,15 @@ class SampleTestWiki extends FlatSpec with ShouldMatchers with UrlTester {
   // joe can edit his note
   ("/wikie/edit/Joe's_private_note", "john@doe.com", "pass") sok "edit"
 
+  // note how you use the 'e' instead of 's' inside a test
   "basic auth" should "fail sometimes" in {
     ("/wikie/edit/Joe's_private_note", "Xjohn@doe.com", "pass").e400
     ("/wikie/edit/Joe's_private_note", "john@doe.com", "Xpass").e400
   }
 }
 
-/** sample perf test */
-class SampleTestPerf extends FlatSpec with ShouldMatchers with UrlTester {
+/** sample perf test - many threads hit the site, each does a sequence of calls */
+class SampleTestPerf extends FlatSpec with ShouldMatchers with razie.UrlTester {
   implicit val hostport = "localhost:9000"
 
   "site" should "be fast" in {
@@ -102,7 +42,27 @@ class SampleTestPerf extends FlatSpec with ShouldMatchers with UrlTester {
   }
 }
 
+/** sample form submission test */
+class SampleTestForm extends FlatSpec with ShouldMatchers with razie.UrlTester {
+  implicit val hostport = "localhost:9000"
+
+  val s = "/wikie/edited/Note:Joe_Private_Note_3"
+  val (u,p) = ("joe@doe.com", "pass")
+
+  val form = Map (
+      "label" -> "Joe Private Note 3",
+      "markup" -> "md",
+      "content" -> "hehe",
+      "visibility" -> "Public",
+      "wvis" -> "Public",
+      "tags" -> "note")
+  val surl = razie.Snakk.url("http://" + hostport + s, razie.AA(), "POST")//.basic(u,p)
+  val bod = razie.Snakk.body(surl)
+  println (bod)
+}
+
 object SampleTestLocalhost extends App {
   org.scalatest.tools.Runner.run("-s snakking.test.SampleTestWiki".split(" "))
   //  org.scalatest.tools.Runner.run("-s snakking.test.SampleTestPerf".split(" "))
+  //  org.scalatest.tools.Runner.run("-s snakking.test.SampleTestForm".split(" "))
 }
