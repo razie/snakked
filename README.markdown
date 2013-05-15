@@ -31,9 +31,17 @@ You can easily read from an HTTP POST as well as the GET above:
 
     val xmlFeed  = url ("http://feeds.razie.com/Razblog?format=xml", razie.AA("field1"->"f1"), "POST")
 
+You can easily submit forms as well:
+
+    val xmlFeed  = url ("http://feeds.razie.com/Razblog?format=xml").form (Map("name" -> "value"))
+
 If you only want to get the body of the server response, wihtout the XPATH wrappers, then
 
     val response = body(xmlFeed)
+
+Supports Basic http authentication, as in:
+
+    val xmlFeed  = url ("http://feeds.razie.com/Razblog?format=xml").basic ("user", "password")
 
 See more examples in core/src/test - some are copied below:
 
@@ -91,6 +99,9 @@ XML attribute fallback
 
     i.e. <x name="tutu" /> can also be <x><name>tutu<name></x> and addressed with x \@ "name"
 
+Forms with basic authentication:
+
+    val xmlFeed  = url ("http://feeds.razie.com/Razblog?format=xml").basic ("user", "password").form (Map("name" -> "value"))
 
 Uses and articles
 ==============
