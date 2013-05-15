@@ -2,6 +2,7 @@ package snakking.test
 
 import org.scalatest.FlatSpec
 import org.scalatest.matchers.ShouldMatchers
+import razie.Snakk
 
 /** sample url tests */
 class SampleTestWiki extends FlatSpec with ShouldMatchers with razie.UrlTester {
@@ -42,22 +43,22 @@ class SampleTestPerf extends FlatSpec with ShouldMatchers with razie.UrlTester {
   }
 }
 
-/** sample form submission test */
-class SampleTestForm extends FlatSpec with ShouldMatchers with razie.UrlTester {
+/** test a form via POST */
+class TestEditForm extends FlatSpec with ShouldMatchers with razie.UrlTester {
   implicit val hostport = "localhost:9000"
 
   val s = "/wikie/edited/Note:Joe_Private_Note_3"
   val (u,p) = ("joe@doe.com", "pass")
 
   val form = Map (
-      "label" -> "Joe Private Note 3",
+      "label" -> ("Joe Private Note "+System.currentTimeMillis),
       "markup" -> "md",
       "content" -> "hehe",
       "visibility" -> "Public",
-      "wvis" -> "Public",
+      "wvis" -> "Private",
       "tags" -> "note")
-  val surl = razie.Snakk.url("http://" + hostport + s, razie.AA(), "POST")//.basic(u,p)
-  val bod = razie.Snakk.body(surl)
+  val surl = Snakk.url("http://" + hostport + s).basic(u,p).form(form)
+  val bod = Snakk.body(surl)
   println (bod)
 }
 

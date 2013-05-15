@@ -12,10 +12,13 @@ import razie.xp.MyBeanSolver
 import com.razie.pub.comms.Comms
 
 /** wraps an URL with some arguments to be passed in the call */
-class SnakkUrl(val url: java.net.URL, val attr: AA, val method:String="GET") {
+class SnakkUrl(val url: java.net.URL, val attr: AA, val method:String="GET", val formData : Option[Map[String,String]]=None) {
   /** transform this URL in one with basic authentication */
   def basic(user: String, password: String) =
-    new SnakkUrl(url, attr ++ AA("Authorization", "Basic " + new sun.misc.BASE64Encoder().encode((user + ":" + password).getBytes)))
+    new SnakkUrl(url, AA("Authorization", "Basic " + new sun.misc.BASE64Encoder().encode((user + ":" + password).getBytes))++attr, method, formData)
+  /** transform this URL into a POST form with the given fields */
+  def form(fields:Map[String,String]) =
+    new SnakkUrl(url, attr, "FORM", Some(fields))
 }
 
 /**
@@ -32,6 +35,15 @@ object Snakk {
   def body(url: SnakkUrl) = url.method match {
     case "GET" => Option(Comms.readUrl(url.url.toString, url.attr)).getOrElse("")
     case "POST" =>Option(Comms.readStream(Comms.xpoststreamUrl2(url.url.toString, url.attr, ""))).getOrElse("")
+    case "FORM" => {
+      val content = razie.AA.map(url.formData.get).addToUrl(null)
+      Option(Comms.readStream(Comms.xpoststreamUrl2(
+          url.url.toString, 
+          url.attr++AA("Content-Type", "application/x-www-form-urlencoded",
+                       "Content-Length", content.length.toString,
+                       "Host", "localhost"), 
+          content))).getOrElse("")
+    }
     case x@_ => throw new IllegalArgumentException ("unknown URL method: "+x)
   }
   
@@ -49,6 +61,8 @@ object Snakk {
   def xml(body: String) = new Wrapper(scala.xml.XML.load(body), ScalaDomXpSolver)
   /** snakk an XML coming from an URL */
   def xml(url: SnakkUrl) = new Wrapper(scala.xml.XML.load(body(url)), ScalaDomXpSolver) // TODO use AA for auth
+  /** helper - simply parse an xml string */
+  def xmlParsed(node: String) = scala.xml.XML.load(node)
 
   def str(node: String) = new Wrapper(node, StringXpSolver)
   def str(url: SnakkUrl) = new Wrapper(body(url), StringXpSolver)
@@ -66,6 +80,8 @@ object Snakk {
   def json(node: String) = new Wrapper[JsonWrapper](JsonSolver.WrapO(new JSONObject(node)), JsonSolver)
   /** snakk a JSON document coming from an URL */
   def json(url: SnakkUrl) = new Wrapper[JsonWrapper](JsonSolver.WrapO(new JSONObject(body(url))), JsonSolver)
+  /** helper - simply parse a json string */
+  def jsonParsed(node: String) = new JSONObject(node)
 
   /** this will go to the URL and try to figure out what the url is */
   def apply(node: String) = new Wrapper(node, StringXpSolver)
