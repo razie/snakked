@@ -11,14 +11,22 @@ import razie.xp.JsonWrapper
 import razie.xp.MyBeanSolver
 import com.razie.pub.comms.Comms
 
-/** wraps an URL with some arguments to be passed in the call */
-class SnakkUrl(val url: java.net.URL, val attr: AA, val method:String="GET", val formData : Option[Map[String,String]]=None) {
+/** 
+ *  wraps an URL with some arguments to be passed in the call 
+ *  
+ *  @param url the actual url
+ *  @param httpAttr http request properties
+ *  @param method  GET/POST/FORM
+ *  @param formData added to the POST request
+ */
+class SnakkUrl(val url: java.net.URL, val httpAttr: Map[String,String]=Map.empty, val method:String="GET", val formData : Map[String,String]=Map.empty) {
   /** transform this URL in one with basic authentication */
   def basic(user: String, password: String) =
-    new SnakkUrl(url, AA("Authorization", "Basic " + new sun.misc.BASE64Encoder().encode((user + ":" + password).getBytes))++attr, method, formData)
-  /** transform this URL into a POST form with the given fields */
+    new SnakkUrl(url, httpAttr++Map("Authorization" -> ("Basic " + new sun.misc.BASE64Encoder().encode((user + ":" + password).getBytes))), method, formData)
+
+  /** add form fields and turn this into a form post */
   def form(fields:Map[String,String]) =
-    new SnakkUrl(url, attr, "FORM", Some(fields))
+    new SnakkUrl(url, httpAttr, "FORM", formData ++ fields)
 }
 
 /**
@@ -29,19 +37,19 @@ class SnakkUrl(val url: java.net.URL, val attr: AA, val method:String="GET", val
  */
 object Snakk {
   /** build a URL */
-  def url(s: String, attr: AA = AA.EMPTY, method:String="GET") = new SnakkUrl(new java.net.URL(s), attr, method)
+  def url(s: String, attr: Map[String,String] = Map.empty, method:String="GET") = new SnakkUrl(new java.net.URL(s), attr, method)
 
   /** retrieve the content from URL, as String */
   def body(url: SnakkUrl) = url.method match {
-    case "GET" => Option(Comms.readUrl(url.url.toString, url.attr)).getOrElse("")
-    case "POST" =>Option(Comms.readStream(Comms.xpoststreamUrl2(url.url.toString, url.attr, ""))).getOrElse("")
+    case "GET" => Option(Comms.readUrl(url.url.toString, AA map url.httpAttr)).getOrElse("")
+    case "POST" =>Option(Comms.readStream(Comms.xpoststreamUrl2(url.url.toString, AA map url.httpAttr, ""))).getOrElse("")
     case "FORM" => {
-      val content = razie.AA.map(url.formData.get).addToUrl(null)
+      val content = razie.AA.map(url.formData).addToUrl(null)
       Option(Comms.readStream(Comms.xpoststreamUrl2(
           url.url.toString, 
-          url.attr++AA("Content-Type", "application/x-www-form-urlencoded",
-                       "Content-Length", content.length.toString,
-                       "Host", "localhost"), 
+          AA.map(url.httpAttr++Map("Content-Type" -> "application/x-www-form-urlencoded",
+                       "Content-Length" -> content.length.toString,
+                       "Host" -> "localhost")), 
           content))).getOrElse("")
     }
     case x@_ => throw new IllegalArgumentException ("unknown URL method: "+x)

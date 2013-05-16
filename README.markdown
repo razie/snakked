@@ -29,7 +29,7 @@ List of blog titles from an XML and JSON feed:
 
 You can easily read from an HTTP POST as well as the GET above:
 
-    val xmlFeed  = url ("http://feeds.razie.com/Razblog?format=xml", razie.AA("field1"->"f1"), "POST")
+    val xmlFeed  = url ("http://feeds.razie.com/Razblog?format=xml", Map("field1"->"f1"), "POST")
 
 You can easily submit forms as well:
 
