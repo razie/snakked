@@ -160,12 +160,13 @@ Well, it really means
  - funny spelling for snack (~ed), (~ing)
 
 
-How?
-----
 
-In the sbt Project file for your project (project/build/Project.scala), add the dependency: 
+How to use
+---------------------
 
-    val snakk = "com.razie" %% "snakked" % "0.4.3-SNAPSHOT"
+The sbt/maven artifact is:
+
+    val snakk = "com.razie" %% "snakked" % "0.4.4-SNAPSHOT"
 
 Or Maven style:
 
@@ -174,6 +175,17 @@ Or Maven style:
         <artifactId>snakked_2.9.1</artifactId>
         <version>0.4.3-SNAPSHOT</version>
     </dependency>
+
+Make sure that, if you use a SNAPSHOT version, the snapshots repository is added to sbt, as in https://github.com/razie/
+scripster/blob/master/project/Build.scala :
+
+    resolvers ++= Seq("snapshots" at "http://oss.sonatype.org/content/repositories/snapshots",
+                      "releases"  at "http://oss.sonatype.org/content/repositories/releases")
+
+Versions
+
+- 0.4.4-SNAPSHOT is the 2.10.0 build, no other code changes
+- 0.4.3-SNAPSHOT is the last 2.9.1 build
 
 
 Dictionary
