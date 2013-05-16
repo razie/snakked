@@ -7,17 +7,17 @@ import razie.Snakk
 /** sample url tests */
 class SampleTestWiki extends FlatSpec with ShouldMatchers with razie.UrlTester {
   // needs a host/port to target in this test
-  implicit val hostport = "localhost:9000"
+  implicit val hostport = "http://localhost:9000"
   val (u,p) = ("joe", "password")
 
   // home page visible - also contains the text "home"
   "/" sok "home"
 
   // admin not reacheable
-  "/admin".s400
+  "/administration".s400
 
   //  "special admin topics" should "not be listed" in {
-  "/wiki/list/Admin" snok "urlmap"
+  "/wiki/list/Special" snok "urlmap"
 
   // anyone can see a blog but not edit it
   "/wiki/Enduro_Blog" sok "dirt bike"
@@ -35,20 +35,18 @@ class SampleTestWiki extends FlatSpec with ShouldMatchers with razie.UrlTester {
 
 /** sample perf test - many threads hit the site, each does a sequence of calls */
 class SampleTestPerf extends FlatSpec with ShouldMatchers with razie.UrlTester {
-  implicit val hostport = "localhost:9000"
+  implicit val hostport = "http://localhost:9000"
 
   "site" should "be fast" in {
     razie.Threads.forkjoin(0 to 100) { i =>
-      ((0 to 10) map { x => "/".w contains "home" }).exists(identity)
+      ((0 to 10) map { x => "/".wget contains "home" }).exists(identity)
     }.exists(p => !p.isDefined || !p.get) === true
   }
 }
 
 /** test a form via POST */
 class TestEditForm extends FlatSpec with ShouldMatchers with razie.UrlTester {
-  implicit val hostport = "localhost:9000"
-
-  val s = "/wikie/edited/Note:Joe_Private_Note_3"
+  implicit val hostport = "http://localhost:9000"
   val (u,p) = ("joe", "password")
 
   val form = Map (
@@ -58,9 +56,8 @@ class TestEditForm extends FlatSpec with ShouldMatchers with razie.UrlTester {
       "visibility" -> "Public",
       "wvis" -> "Private",
       "tags" -> "note")
-  val surl = Snakk.url("http://" + hostport + s).basic(u,p).form(form)
-  val bod = Snakk.body(surl)
-  println (bod)
+  
+  "/wikie/save/Note:Joe_Private_Note_3".url.basic(u,p).form(form) sok "Private"
 }
 
 object SampleTestLocalhost extends App {
