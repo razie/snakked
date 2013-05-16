@@ -166,7 +166,7 @@ How to use
 
 The sbt/maven artifact is:
 
-    val snakk = "com.razie" %% "snakked" % "0.4.4-SNAPSHOT"
+    val snakk = "com.razie" %% "snakked" % "0.6.4-SNAPSHOT"
 
 Or Maven style:
 
@@ -184,7 +184,7 @@ scripster/blob/master/project/Build.scala :
 
 Versions
 
-- 0.4.4-SNAPSHOT is the 2.10.0 build, no other code changes
+- 0.6.4-SNAPSHOT is the 2.10.0 build, no other code changes
 - 0.4.3-SNAPSHOT is the last 2.9.1 build
 
 

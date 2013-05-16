@@ -3,7 +3,7 @@ import Keys._
 
 object V {
   val version      = "0.6.4-SNAPSHOT"
-  val scalaVersion = "2.10.0" // "2.9.1"
+  val scalaVersion = "2.10.0" 
   val organization = "com.razie"
 
   def snap = (if (V.version endsWith "-SNAPSHOT") "-SNAPSHOT" else "")
