@@ -8,6 +8,7 @@ import razie.Snakk
 class SampleTestWiki extends FlatSpec with ShouldMatchers with razie.UrlTester {
   // needs a host/port to target in this test
   implicit val hostport = "localhost:9000"
+  val (u,p) = ("joe", "password")
 
   // home page visible - also contains the text "home"
   "/" sok "home"
@@ -23,12 +24,12 @@ class SampleTestWiki extends FlatSpec with ShouldMatchers with razie.UrlTester {
   "/wikie/edit/Enduro_Blog".s400
 
   // joe can edit his note
-  ("/wikie/edit/Joe's_private_note", "john@doe.com", "pass") sok "edit"
+  ("/wikie/edit/Joe's_private_note", u, p) sok "edit"
 
   // note how you use the 'e' instead of 's' inside a test
-  "basic auth" should "fail sometimes" in {
-    ("/wikie/edit/Joe's_private_note", "Xjohn@doe.com", "pass").e400
-    ("/wikie/edit/Joe's_private_note", "john@doe.com", "Xpass").e400
+  "basic auth" should "fail on wrong user/pass" in {
+    ("/wikie/edit/Joe's_private_note", u+u, p).e400
+    ("/wikie/edit/Joe's_private_note", u, p+p).e400
   }
 }
 
@@ -48,7 +49,7 @@ class TestEditForm extends FlatSpec with ShouldMatchers with razie.UrlTester {
   implicit val hostport = "localhost:9000"
 
   val s = "/wikie/edited/Note:Joe_Private_Note_3"
-  val (u,p) = ("joe@doe.com", "pass")
+  val (u,p) = ("joe", "password")
 
   val form = Map (
       "label" -> ("Joe Private Note "+System.currentTimeMillis),
