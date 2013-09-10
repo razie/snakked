@@ -27,6 +27,8 @@ class SnakkUrl(val url: java.net.URL, val httpAttr: Map[String,String]=Map.empty
   /** add form fields and turn this into a form post */
   def form(fields:Map[String,String]) =
     new SnakkUrl(url, httpAttr, "FORM", formData ++ fields)
+  
+  override def toString : String = s"SnakkUrl: $method ${url.toString} ++ ${httpAttr.mkString} ++ ${formData.mkString}"
 }
 
 /**
@@ -44,7 +46,7 @@ object Snakk {
     case "GET" => Option(Comms.readUrl(url.url.toString, AA map url.httpAttr)).getOrElse("")
     case "POST" =>Option(Comms.readStream(Comms.xpoststreamUrl2(url.url.toString, AA map url.httpAttr, ""))).getOrElse("")
     case "FORM" => {
-      val content = razie.AA.map(url.formData).addToUrl(null)
+      val content = razie.AA.map(url.formData).addToUrl("")
       Option(Comms.readStream(Comms.xpoststreamUrl2(
           url.url.toString, 
           AA.map(url.httpAttr++Map("Content-Type" -> "application/x-www-form-urlencoded",

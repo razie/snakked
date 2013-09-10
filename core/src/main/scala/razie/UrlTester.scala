@@ -21,12 +21,13 @@ trait UrlTester { self: FlatSpec with ShouldMatchers =>
 
   /** helper class, will add the test methods */
   case class MyUrl(url:SnakkUrl) {
-    def s = url.url.getPath()
+    def s = url.url.toString//.getPath()
     
     def wget(implicit hostport: String): String = {
       import razie.Snakk
 
-      val u = new SnakkUrl(new URL(hostport + url.url.getPath()), url.httpAttr, url.method, url.formData)
+//      val u = new SnakkUrl(new URL(hostport + s), url.httpAttr, url.method, url.formData)
+      val u = new SnakkUrl(new URL(s), url.httpAttr, url.method, url.formData)
       val bod = Snakk.body(u)
       bod
     }
