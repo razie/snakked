@@ -135,6 +135,8 @@ object Snakk {
     def headOption = nodes.headOption
     //  def firstOption = nodes.firstOption map (new Wrapper(_, ctx))
 
+    def ++ (other:ListWrapper[T]) = new ListWrapper(nodes ++ other.nodes, ctx)
+
     def size = nodes.size
     override def toString = nodes.toString
   }

@@ -16,7 +16,7 @@ private object TestHelper {
  *  
  *  See class snakking.test.SampleWebTest for examples
  */
-trait UrlTester { self: FlatSpec with ShouldMatchers =>
+trait UrlTester { this: FlatSpec with ShouldMatchers =>
   import TestHelper._
 
   /** helper class, will add the test methods */
