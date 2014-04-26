@@ -8,3 +8,5 @@ lib_managed
 src_managed
 target
 project/plugins/project
+/project
+/project077

@@ -2,13 +2,13 @@ import sbt._
 import Keys._
 
 object V {
-  val version      = "0.6.5-SNAPSHOT"
-  val scalaVersion = "2.10.2" 
+  val version      = "0.6.6-SNAPSHOT"
+  val scalaVersion = "2.10.3" 
   val organization = "com.razie"
 
   def snap = (if (V.version endsWith "-SNAPSHOT") "-SNAPSHOT" else "")
 
-  def RAZBASEVER = "0.6.5" + snap
+  def RAZBASEVER = "0.6.6" + snap
 }
 
 object MyBuild extends Build {
