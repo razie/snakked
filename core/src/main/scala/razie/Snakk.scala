@@ -68,11 +68,11 @@ object Snakk {
   /** snakk a DOM parsed already */
   def xml(node: scala.xml.Elem) = new Wrapper(node, ScalaDomXpSolver)
   /** snakk an XML contained in a String */
-  def xml(body: String) = new Wrapper(scala.xml.XML.load(body), ScalaDomXpSolver)
+  def xml(body: String) = new Wrapper(scala.xml.XML.loadString(body), ScalaDomXpSolver)
   /** snakk an XML coming from an URL */
-  def xml(url: SnakkUrl) = new Wrapper(scala.xml.XML.load(body(url)), ScalaDomXpSolver) // TODO use AA for auth
+  def xml(url: SnakkUrl) = new Wrapper(scala.xml.XML.loadString(body(url)), ScalaDomXpSolver) // TODO use AA for auth
   /** helper - simply parse an xml string */
-  def xmlParsed(node: String) = scala.xml.XML.load(node)
+  def xmlParsed(node: String) = scala.xml.XML.loadString(node)
 
   def str(node: String) = new Wrapper(node, StringXpSolver)
   def str(url: SnakkUrl) = new Wrapper(body(url), StringXpSolver)

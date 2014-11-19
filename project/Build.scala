@@ -3,7 +3,7 @@ import Keys._
 
 object V {
   val version      = "0.6.6-SNAPSHOT"
-  val scalaVersion = "2.10.3" 
+  val scalaVersion = "2.10.4" 
   val organization = "com.razie"
 
   def snap = (if (V.version endsWith "-SNAPSHOT") "-SNAPSHOT" else "")
@@ -19,7 +19,7 @@ object MyBuild extends Build {
   def jxpath    = "commons-jxpath" % "commons-jxpath"  % "1.3"
   
   def razBase   = "com.razie"     %% "base"            % V.RAZBASEVER
-  def razWeb    = "com.razie"     %% "razweb"          % V.RAZBASEVER
+  //def razWeb    = "com.razie"     %% "razweb"          % V.RAZBASEVER
 
 
   lazy val root = Project(id="snakked",    base=file("."),
@@ -28,7 +28,8 @@ object MyBuild extends Build {
 
   lazy val core = Project(id="snakk-core", base=file("core"),
                           settings = defaultSettings ++ 
-                          Seq(libraryDependencies ++= Seq(scalatest, junit, json, jxpath, razBase, razWeb))
+                          Seq(libraryDependencies ++= Seq(scalatest, junit, json, jxpath, razBase))
+                          //Seq(libraryDependencies ++= Seq(scalatest, junit, json, jxpath, razBase, razWeb))
                   )
 
   def defaultSettings = baseSettings ++ Seq()
