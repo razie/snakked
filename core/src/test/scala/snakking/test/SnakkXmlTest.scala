@@ -6,7 +6,7 @@
 package snakking.test
 
 import razie.{ XP, DomXpSolver }
-import razie.base.data.RazElement._
+import razie.xp.RazElement._
 import razie.Snakk
 import org.junit.Test
 import org.scalatest.junit.MustMatchersForJUnit
