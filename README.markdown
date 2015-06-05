@@ -71,6 +71,10 @@ Can snakk a bean by type of attribute - in example below we use C3 class name. U
   
     @Test def test21  = expect("wow" :: Nil) { Snakk.bean(C1) \\ "C3" \@ "c" }
 
+Note that if the expression is dynamic, you can pass it all as an XPATH expression:
+
+    school \  "classes/students[age==7]"
+    school \@ "classes/students[age==7]/@name"
 
 More features
 -------------
