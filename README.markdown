@@ -170,14 +170,14 @@ How to use
 
 The sbt/maven artifact is:
 
-    val snakk = "com.razie" %% "snakked" % "0.6.4-SNAPSHOT"
+    val snakk = "com.razie" %% "snakked" % "0.6.7-SNAPSHOT"
 
 Or Maven style:
 
     <dependency>
         <groupId>com.razie</groupId>
-        <artifactId>snakked_2.9.1</artifactId>
-        <version>0.4.3-SNAPSHOT</version>
+        <artifactId>snakked_2.10</artifactId>
+        <version>0.6.7-SNAPSHOT</version>
     </dependency>
 
 Make sure that, if you use a SNAPSHOT version, the snapshots repository is added to sbt, as in https://github.com/razie/
@@ -188,9 +188,11 @@ scripster/blob/master/project/Build.scala :
 
 Versions
 
+- 0.6.7-SNAPSHOT on 2.10 moved xp and graphs in here
 - 0.6.4-SNAPSHOT is the 2.10.0 build, no other code changes
 - 0.4.3-SNAPSHOT is the last 2.9.1 build
 
+See https://oss.sonatype.org/content/repositories/snapshots/com/razie/snakked_2.10/ for the latest versions.
 
 Dictionary
 ==========
