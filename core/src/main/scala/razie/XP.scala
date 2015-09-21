@@ -219,11 +219,26 @@ class XpCond(val expr: String) {
 /** the strategy to break down the input based on the current path element. The solving algorithm is: apply current sub-path to current sub-nodes, get the results and RESTs. Filter by conditions and recurse.  */
 trait XpSolver[T] {
 
-  /** type U stands for the continuation that following methods pass to themselves */
+  /** type U stands for the continuation that following methods pass to themselves. 
+   *  
+   *  Ideally it's just a closure that can implement getNext(curr: (T, U), tag: String, assoc: String): Iterable[(T, U)]
+   *  
+   *  So options include
+   *  
+   *  type U = List[MyWrapper] 
+   *  and
+   *  type U = PartialFunction[(String, String), List[MyWrapper]]  // basically getNext (tag, assoc)
+   *  
+   *  The continuation is very good when getting the kids is expensive, like a DB query, eh?
+   */
   type U
 
   /**
-   * prepare to start from a node, figure out the continuations
+   * prepare to start from a node, figure out the continuations.
+   *
+   * This is only used to start, from the root - then getNext is used
+   * 
+   * You can return an actual list of nodes or a callback that you then call from getNext to get the actuals
    *
    * @param root the node we'll start resolving from
    * @return
@@ -231,16 +246,10 @@ trait XpSolver[T] {
   def children(root: T): (T, U)
 
   /**
-   * finally unwrap whatever and serve plain objects
-   *
-   * @param root the node we'll start resolving from
-   * @return
-   */
-  def unwrap(root: List[T]): List[T] = root
-
-  /**
    * get the next list of nodes at the current position in the path.
    * For each, return a tuple with the respective value and the REST to continue solving
+   * 
+   * You can return an actual list of nodes or a callback that you then call from getNext to get the actuals
    *
    * @param curr the list of (currelement, continuation) to analyze
    * @return
@@ -270,6 +279,15 @@ trait XpSolver[T] {
       case null => curr //.asInstanceOf[List[(T, U)]]
       case _ => curr.filter(x => xe.cond.passes(x._1, this))
     }
+
+  /**
+   * finally unwrap whatever and serve plain objects
+   *
+   * @param root the node we'll start resolving from
+   * @return
+   */
+  def unwrap(root: List[T]): List[T] = root
+
 }
 
 /** an element in the path */
@@ -312,8 +330,7 @@ object StringXpSolver extends XpSolver[String] {
 
 }
 
-/** this resolves dom trees*/
-
+/** this resolves XML dom trees*/
 class DomXpSolver extends XpSolver[RazElement] {
   type T = RazElement
   type U = List[RazElement]
@@ -332,7 +349,7 @@ class DomXpSolver extends XpSolver[RazElement] {
   //    o.asInstanceOf[List[(T, U)]]
 }
 
-/** this resolves dom trees*/
+/** this resolves scala xml dom trees*/
 object ScalaDomXpSolver extends XpSolver[scala.xml.Elem] {
   type T = scala.xml.Elem
   type U = List[scala.xml.Elem]

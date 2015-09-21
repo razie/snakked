@@ -222,6 +222,3 @@ object GAMAct extends GAct {
    def act     (k:GRef, a:String, ctx:AC) : Any   = assetMgr.act(k, a, ctx)
 }
 
-//class Concentrator extends GCRUD with GAct {
-//}
-

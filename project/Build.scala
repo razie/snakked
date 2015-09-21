@@ -2,7 +2,7 @@ import sbt._
 import Keys._
 
 object V {
-  val version      = "0.6.7-SNAPSHOT"
+  val version      = "0.6.7" //-SNAPSHOT"
   val scalaVersion = "2.10.4" 
   val organization = "com.razie"
 
@@ -43,11 +43,12 @@ object MyBuild extends Build {
       if(v endsWith "-SNAPSHOT")
         Some ("Sonatype" at "https://oss.sonatype.org/content/repositories/snapshots/")
       else
-        Some ("Sonatype" at "https://oss.sonatype.org/content/repositories/releases/")
+        Some ("Sonatype" at "https://oss.sonatype.org/service/local/staging/deploy/maven2")
     } ,
 
-    resolvers ++= Seq("snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
-                      "releases"  at "https://oss.sonatype.org/content/repositories/releases") 
+    resolvers ++= Seq(
+      "snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
+      "releases"  at "https://oss.sonatype.org/content/repositories/releases") 
     )
 
 }
