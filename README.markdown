@@ -6,7 +6,7 @@
      *  Copyright (c) Razvan Cojocaru, 2007+, Creative Commons Attribution 3.0
      */
 
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.razie/snakked/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.razie/snakked)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.razie/snakked_2.10/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.razie/snakked_2.10)
 
 What?
 -------
