@@ -6,7 +6,7 @@
 package razie.g
 
 import org.scalatest.junit._
-import org.scalatest.SuperSuite
+//import org.scalatest.SuperSuite
 import org.scalatest.matchers._
 import razie.{G}
 import razie.g._
@@ -47,7 +47,7 @@ class MyN (val color:String) extends razie.g.GNode[MyN, MyL] with razie.g.WRGrap
  * 
  * @author razvanc99
  */
-class GraphTest extends MustMatchersForJUnit with ShouldMatchers {
+class GraphTest extends MustMatchersForJUnit  {
   import razie.g.Graphs._  // get the implicits
   
   // for the nice inherited --> operators                             

@@ -38,8 +38,29 @@ class SnakkUrl(val url: java.net.URL, val httpAttr: Map[String,String]=Map.empty
  * { root \ "j" map identity }  is the same as { for ( n <- root \ "j" ) yield n }
  */
 object Snakk {
-  /** build a URL */
+  /** build a URL
+    *
+    * @param s the url string
+    * @param attr http request properties
+    * @param method  GET/POST/FORM
+    */
   def url(s: String, attr: Map[String,String] = Map.empty, method:String="GET") = new SnakkUrl(new java.net.URL(s), attr, method)
+
+  /** retrieve the content from URL, as String */
+  def conn(url: SnakkUrl) = url.method match {
+    case "GET" => Comms.streamUrlA(url.url.toString, AA map url.httpAttr)
+    case "POST" =>Comms.xpoststreamUrl2A(url.url.toString, AA map url.httpAttr, "")
+    case "FORM" => {
+      val content = razie.AA.map(url.formData).addToUrl("")
+      Comms.xpoststreamUrl2A(
+        url.url.toString,
+        AA.map(url.httpAttr++Map("Content-Type" -> "application/x-www-form-urlencoded",
+          "Content-Length" -> content.length.toString,
+          "Host" -> "localhost")),
+        content)
+    }
+    case x@_ => throw new IllegalArgumentException ("unknown URL method: "+x)
+  }
 
   /** retrieve the content from URL, as String */
   def body(url: SnakkUrl) = url.method match {
@@ -97,11 +118,23 @@ object Snakk {
   def apply(node: String) = new Wrapper(node, StringXpSolver)
 
   /** OO wrapper for self-solving XP elements HEY this is like an open monad :) */
-  class ListWrapper[T](val nodes: List[T], val ctx: XpSolver[T]) {
+  trait BaseWrapper[T] {
     /** factory method - overwrite with yours*/
     def wrapList (nodes:List[T], ctx:XpSolver[T]) = new ListWrapper(nodes, ctx)
     def wrapNode (node:T, ctx:XpSolver[T]) = new Wrapper(node, ctx)
-    
+
+    /** the head of the list of children with the respective tag */
+    def \\\(name: String): T
+    /** the head of the list of children two levels down with the respective tag */
+    def \\*(name: String): T
+    /** the single attributes with the respective name */
+    def \@@(name: String): String
+    /** the attributeS with the respective name */
+    def \\@(name: String): List[String]
+  }
+
+  /** OO wrapper for self-solving XP elements HEY this is like an open monad :) */
+  class ListWrapper[T](val nodes: List[T], val ctx: XpSolver[T]) extends BaseWrapper[T] {
     def xpl  (path:String) = nodes.flatMap(n => XP[T](path).xpl(ctx, n))
     def xpa  (path:String) = nodes.headOption.map(n => XP[T](path).xpa(ctx, n))
     def xpla (path:String) = nodes.flatMap(n => XP[T](path).xpla(ctx, n))
@@ -142,11 +175,7 @@ object Snakk {
   }
 
   /** OO wrapper for self-solving XP elements */
-  class Wrapper[T](val node: T, val ctx: XpSolver[T]) {
-    /** factory method - overwrite with yours*/
-    def wrapList (nodes:List[T], ctx:XpSolver[T]) = new ListWrapper(nodes, ctx)
-    def wrapNode (node:T, ctx:XpSolver[T]) = new Wrapper(node, ctx)
-
+  class Wrapper[T](val node: T, val ctx: XpSolver[T]) extends BaseWrapper[T] {
     def xpl  (path:String) = XP[T](path).xpl(ctx, node)
     def xpa  (path:String) = XP[T](path).xpa(ctx, node)
     def xpla (path:String) = XP[T](path).xpla(ctx, node)

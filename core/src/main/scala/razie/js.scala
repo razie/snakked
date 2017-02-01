@@ -19,6 +19,10 @@ import scala.collection.mutable.{HashMap, ListBuffer}
  */
 object js {
 
+  def quote(s: String): String = {
+    JSONObject.quote(s)
+  }
+
   /** turn a map of name,value into json */
   def tojson(x: Map[_, _]): JSONObject = {
     val o = new JSONObject()
@@ -84,10 +88,9 @@ object js {
   /** @see jt */
   def jt(x: List[_])(f: PartialFunction[(String, String, Any), (String, Any)]): List[_] = jt(x, "/")(f)
 
-
   val q = "\""
 
-  private def q(str:String) = "\""+str+"\""
+  private def q(str:String) = quote(str)
 
   /** turn a map of name,value into json */
   def tojsons(x: Map[_, _], i:Int = 1): String = {
@@ -118,6 +121,7 @@ object js {
         case l: List[_] => o += tojsons(l, i+1) +comma+"\n"
         case s: String => o += " "*i+q(s) +comma
         case s: JSONObject => o += " "*i+q(s.toString) +comma
+        case s => o += " "*i+q(s.toString) +comma
       }
     }
     o + (if(x.headOption.exists(!_.isInstanceOf[String])) " "*(i-1) else "") + "]"
@@ -136,11 +140,12 @@ object js {
   def fromObject (a:JSONObject) : Map[String, Any] = {
     import scala.collection.JavaConversions._
     val r = new HashMap[String, Any]
-    for (k <- 0 until a.names.length)
+    if(a.names != null) for (k <- 0 until a.names.length)
       r.put(a.names.get(k).toString, a.get(a.names.get(k).toString) match {
         case s: String => s
         case s: JSONObject => fromObject(s)
         case s: JSONArray => fromArray(s)
+        case s => s.toString
       })
     r.toMap
   }

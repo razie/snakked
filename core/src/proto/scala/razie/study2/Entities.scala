@@ -48,7 +48,7 @@ case class Parm (val parmDefn: String) {
 }
 
 /* lazy reflection based parm spec */
-case class VParm {
+case object VParm {
   var spec : AttrSpec = null
 }
 

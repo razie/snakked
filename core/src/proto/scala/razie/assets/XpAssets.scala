@@ -16,7 +16,7 @@ object XpAssetsSolver extends XpSolver[AssetBase,AssetBase] {
    override def getNext[T>:AssetBase,U>:AssetBase](o:(T,U),tag:String, assoc:String) : Iterable[(T,U)]={
       if (o._1 == AROOT || o._1 == null) {
          // starting point
-         val ret = for (val b <- AssetMgr.find (tag, null, true).values) yield {
+         val ret = for (b <- AssetMgr.find (tag, null, true).values) yield {
             val a = AssetMgr.getAsset(b.key);
             (a.asInstanceOf[T],a.asInstanceOf[U])
          }
