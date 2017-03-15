@@ -31,7 +31,7 @@ You can easily submit forms as well:
 
     val xmlFeed  = url ("http://feeds.razie.com/Razblog?format=xml").form (Map("name" -> "value"))
 
-If you only want to get the body of the server response, wihtout the XPATH wrappers, then
+If you only want to get the body of the server response, without the XPATH wrappers, then
 
     val response = body(xmlFeed)
 
