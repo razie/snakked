@@ -24,6 +24,16 @@ object js {
   }
 
   /** turn a map of name,value into json */
+  def anytojsons(x:Any): String = {
+      x match {
+        case m: Map[_, _] => tojsons(m)
+        case s: String => s
+        case l: List[_] => tojsons(l,0)
+        case h @ _ => h.toString
+      }
+  }
+
+  /** turn a map of name,value into json */
   def tojson(x: Map[_, _]): JSONObject = {
     val o = new JSONObject()
     x foreach {t:(_,_) =>

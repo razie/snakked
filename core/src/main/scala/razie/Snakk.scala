@@ -46,10 +46,12 @@ object Snakk {
     */
   def url(s: String, attr: Map[String,String] = Map.empty, method:String="GET") = new SnakkUrl(new java.net.URL(s), attr, method)
 
-  /** retrieve the content from URL, as String */
-  def conn(url: SnakkUrl) = url.method match {
+  /** retrieve the content from URL, as String
+    * @param postContent optionally some content for post
+    */
+  def conn(url: SnakkUrl, postContent:Option[String]=None) = url.method match {
     case "GET" => Comms.streamUrlA(url.url.toString, AA map url.httpAttr)
-    case "POST" =>Comms.xpoststreamUrl2A(url.url.toString, AA map url.httpAttr, "")
+    case "POST" =>Comms.xpoststreamUrl2A(url.url.toString, AA map url.httpAttr, postContent.getOrElse(""))
     case "FORM" => {
       val content = razie.AA.map(url.formData).addToUrl("")
       Comms.xpoststreamUrl2A(
@@ -62,10 +64,12 @@ object Snakk {
     case x@_ => throw new IllegalArgumentException ("unknown URL method: "+x)
   }
 
-  /** retrieve the content from URL, as String */
-  def body(url: SnakkUrl) = url.method match {
+  /** retrieve the content from URL, as String
+    * @param postContent optionally some content for post
+    */
+  def body(url: SnakkUrl, postContent:Option[String]=None) = url.method match {
     case "GET" => Option(Comms.readUrl(url.url.toString, AA map url.httpAttr)).getOrElse("")
-    case "POST" =>Option(Comms.readStream(Comms.xpoststreamUrl2(url.url.toString, AA map url.httpAttr, ""))).getOrElse("")
+    case "POST" =>Option(Comms.readStream(Comms.xpoststreamUrl2(url.url.toString, AA map url.httpAttr, postContent.getOrElse("")))).getOrElse("")
     case "FORM" => {
       val content = razie.AA.map(url.formData).addToUrl("")
       Option(Comms.readStream(Comms.xpoststreamUrl2(
@@ -123,8 +127,12 @@ object Snakk {
     def wrapList (nodes:List[T], ctx:XpSolver[T]) = new ListWrapper(nodes, ctx)
     def wrapNode (node:T, ctx:XpSolver[T]) = new Wrapper(node, ctx)
 
+    /** the list of children with the respective tag */
+    def \(name: String): ListWrapper[T]
     /** the head of the list of children with the respective tag */
     def \\\(name: String): T
+    /** the list of children two levels down with the respective tag */
+    def \*(name: String): ListWrapper[T]
     /** the head of the list of children two levels down with the respective tag */
     def \\*(name: String): T
     /** the single attributes with the respective name */
@@ -202,8 +210,10 @@ object Snakk {
 
   class DString (orig: =>String) {
    override def toString = orig
-   
+
    def OR (fallback: =>String) = new DfltStringVal(()=>orig, ()=>fallback)
+
+   def toOption = Option(orig)
   }
   
   class DfltStringVal (orig:()=>String, fallback: ()=>String) {
@@ -218,6 +228,8 @@ object Snakk {
 //       case classOf[String]:Manifest => 
 //     }
 //   }
+
+  def toOption = Option(toString)
   }
   
   implicit def toD (orig:String) = new DString(orig)
