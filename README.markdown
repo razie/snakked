@@ -6,7 +6,8 @@
      *  Copyright (c) Razvan Cojocaru, 2007+, Creative Commons Attribution 3.0
      */
 
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.razie/snakked_2.10/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.razie/snakked_2.10)
+2.10 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.razie/snakked_2.10/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.razie/snakked_2.10)
+2.11 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.razie/snakked_2.11/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.razie/snakked_2.11)
 
 Snakking
 ========
