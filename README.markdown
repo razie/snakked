@@ -17,7 +17,7 @@ razie.Snakk gives simple methods to suck content from URLs, including files etc 
 List of blog titles from an XML and JSON feed:
     import razie.Snakk._
 
-    val xmlFeed  = url ("http://feeds.razie.com/Razblog?format=xml")
+    val xmlFeed  = url ("http://feeds.razie.com/Coolscala?format=xml")
     val jsonFeed = url ("http://blog.razie.com/feeds/posts/default?alt=json")
 
     for (n <- xml(xmlFeed) \ "channel" \ "item" \ "title") println (n.text)
