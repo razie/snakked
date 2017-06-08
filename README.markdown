@@ -14,6 +14,10 @@ Snakking
 
 razie.Snakk gives simple methods to suck content from URLs, including files etc in a few formats and then access them in a unified manner, based on an addressing sceheme like XPATH.
 
+    resolvers ++= Seq("snapshots" at "http://oss.sonatype.org/content/repositories/snapshots",
+                      "releases"  at "http://oss.sonatype.org/content/repositories/releases")
+    val snakk = "com.razie" %% "snakked" % "0.9.2-SNAPSHOT"
+
 List of blog titles from an XML and JSON feed:
     import razie.Snakk._
 

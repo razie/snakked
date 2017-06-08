@@ -148,7 +148,6 @@ object js {
 
   /** build a Map from a JSON parsed object */
   def fromObject (a:JSONObject) : Map[String, Any] = {
-    import scala.collection.JavaConversions._
     val r = new HashMap[String, Any]
     if(a.names != null) for (k <- 0 until a.names.length)
       r.put(a.names.get(k).toString, a.get(a.names.get(k).toString) match {
