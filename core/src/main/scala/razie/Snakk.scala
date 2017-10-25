@@ -121,6 +121,9 @@ object Snakk {
   /** this will go to the URL and try to figure out what the url is */
   def apply(node: String) = new Wrapper(node, StringXpSolver)
 
+  /** an empty node */
+  def empty = new ListWrapper(Nil, StringXpSolver)
+
   /** OO wrapper for self-solving XP elements HEY this is like an open monad :) */
   trait BaseWrapper[T] {
     /** factory method - overwrite with yours*/

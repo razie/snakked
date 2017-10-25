@@ -62,7 +62,9 @@ case class XP[T](val gp: GPath) {
   /** return the matching attribute - solve this path starting with the root and the given solving strategy */
   def xpa(ctx: XpSolver[T], root: T): String = {
     gp.requireAttr
-    ctx.getAttr(ixpl(ctx, root).head, gp.elements.last.name)
+    ixpl(ctx, root).headOption.map {
+      ctx.getAttr(_, gp.elements.last.name)
+    }.getOrElse("")
   }
 
   /** return the list of matching attributes - solve this path starting with the root and the given solving strategy */
@@ -172,11 +174,11 @@ case class GPath(val expr: String) {
 
   def requireAttr =
     if (elements.last.attr != "@")
-      throw new IllegalArgumentException("ERR_XP result should be attribute but it's an entity...")
+      throw new IllegalArgumentException("ERR_XP result should be attribute but it's an entity, in " + expr)
 
   def requireNotAttr =
     if (elements.size > 0 && elements.last.attr == "@")
-      throw new IllegalArgumentException("ERR_XP result should be entity but it's an attribute...")
+      throw new IllegalArgumentException("ERR_XP result should be entity but it's an attribute, in " + expr)
 
   /** the first element after a ** */
   def afterSS: XpElement = elements(elements.indexWhere(_.name == "**") + 1)
@@ -290,9 +292,10 @@ trait XpSolver[T] {
 
 }
 
-/** an element in the path */
+/** an element in the path: "{assoc}@prefix:name[cond]" */
 protected class XpElement(val expr: String) {
-  val parser = """(\{.*\})*([@])*([\w]+\:)*([\$|\w]+|\**)(\[.*\])*""".r
+  // todo maybe not allow space, but wrap the name in something automatically if spaces present?
+  val parser = """(\{.*\})*([@])*([\w]+\:)*([\$|\w\. -]+|\**)(\[.*\])*""".r
   val parser(assoc_, attr, prefix, name, scond) = expr
   val cond = XpCondFactory.make(scond)
 
