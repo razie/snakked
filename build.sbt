@@ -62,7 +62,7 @@ publishMavenStyle := true
 
 publishArtifact in Test := false
 
-pomIncludeRepository := { x => false }
+//pomIncludeRepository := { x => false }
 
 pomExtra := (
   <scm>
