@@ -5,13 +5,13 @@ name := "snakked"
 
 lazy val commonSettings = Seq(
   organization := "com.razie",
-  version := "0.9.2-SNAPSHOT",
+  version := "0.9.3-SNAPSHOT",
   scalaVersion := "2.11.8",
 
-  organizationName     := "Razie's Pub",
-  organizationHomepage := Some(url("http://www.razie.com")),
+  organizationName     := "DieselApps",
+  organizationHomepage := Some(url("http://www.dieselapps.com")),
   licenses := Seq("BSD-style" -> url("http://www.opensource.org/licenses/bsd-license.php")),
-  homepage := Some(url("http://www.razie.com"))
+  homepage := Some(url("http://www.dieselapps.com"))
 )
 
 libraryDependencies in Global ++= Seq(
@@ -73,7 +73,7 @@ pomExtra := (
     <developer>
       <id>razie</id>
       <name>Razvan Cojocaru</name>
-      <url>http://www.razie.com</url>
+      <url>http://www.dieselapps.com</url>
     </developer>
   </developers>
   <licenses>
@@ -84,6 +84,5 @@ pomExtra := (
     </license>
 </licenses>
 )
-
 
 
