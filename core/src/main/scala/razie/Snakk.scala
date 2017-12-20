@@ -253,12 +253,16 @@ object Snakk {
     )
   }
 
+  // magic
+  val SSS = "SNAKKSNAKKSNAKK"
+
   def responseFromJson (body:String) = {
-    val m = razie.js.parse(body)
+    val x = body.split (SSS)
+    val m = razie.js.parse(x(0))
     val h = m("headers").asInstanceOf[Map[String, String]]
     val ctype = h("Content-Type").toString
 
-    SnakkResponse(m("responseCode").toString, h, m("content").toString, ctype, m("id").toString)
+    SnakkResponse(m("responseCode").toString, h, x(1), ctype, m("id").toString)
   }
 }
 
@@ -276,12 +280,13 @@ case class SnakkRequest (protocol: String, method: String, url: String, headers:
 }
 
 case class SnakkResponse (responseCode:String, headers: Map[String, String], content: String, ctype:String, id:String="") {
+  /** it will not include the content */
   def toJson = {
     val m = new mutable.HashMap[String, Any]()
     m.put("id", id)
     m.put("responseCode", responseCode)
     m.put("headers", headers)
-    m.put("content", content)
+    m.put("content", "")
     m.put("ctype", ctype)
     m.toMap
   }

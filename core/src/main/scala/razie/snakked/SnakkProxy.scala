@@ -33,7 +33,7 @@ object SnakkProxy {
     SLEEP1 = System.getProperty("snakk.proxy.sleep1", "1000").toInt
     SLEEP2 = System.getProperty("snakk.proxy.sleep2", "5000").toInt
     DELAY = System.getProperty("snakk.proxy.delay", "15000").toInt
-    COUNT = System.getProperty("snakk.proxy.sleep", "20").toInt
+    COUNT = System.getProperty("snakk.proxy.count", "20").toInt
 
     log("ARGS: " + args.mkString)
 
@@ -93,7 +93,9 @@ object SnakkProxy {
 
       val r = doProxy(rq)
 
-      Snakk.body(Snakk.url("http://" + source + "/snakk/complete/" + rq.id, Map.empty, "POST"), Some(razie.js.tojsons(r.toJson)))
+      val content = razie.js.tojsons(r.toJson) + Snakk.SSS + r.content
+
+      Snakk.body(Snakk.url("http://" + source + "/snakk/complete/" + rq.id, Map.empty, "POST"), Some(content))
       return true
     }
     else {
