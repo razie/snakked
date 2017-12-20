@@ -1,34 +1,153 @@
-package razie
+package razie.snakked
 
-import java.util.concurrent.TimeUnit
+import java.io.{File, IOException, InputStream}
+import java.net.{MalformedURLException, URL, URLConnection}
 
-import akka.actor.{Actor, Props, _}
-import org.joda.time.DateTime
+import com.razie.pub.comms.{CommRtException, Comms}
+import razie.base.AttrAccess
+import razie.{Snakk, SnakkRequest, SnakkResponse, js}
 
 import scala.collection.mutable
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.Duration
 
-/** controller for server side fiddles / services */
-object SnakkProxy extends scala.App {
+/** a snakking proxy
+  *
+  * snakk.proxy.to = URL to ping for snakk requests, separated by commas, like:
+  *
+  * -D snakk.proxy.to=http://host1.me.com:9000,http://host2.me.com:9000
+  *
+  */
+object SnakkProxy {
 
-  val dest : String = System.getProperty("snakk.proxy.to")
+  var dests : Array[String] = Array()
+  var sources : Array[String] = Array()
 
-  while (true) {
-    try {
-      check(dest)
-    } catch {
-      case t => log (t.toString)
+  var SLEEP1 : Int = 1000 // short sleep
+  var SLEEP2 : Int = 5000 // long sleep
+  var DELAY : Int = 15000 // for short sleep
+  var COUNT : Int = 20    // for testing
+
+  def main (args : Array[String]) = {
+    // are arguments set?
+    dests = System.getProperty("snakk.proxy.dests", "").split(",")
+    sources = System.getProperty("snakk.proxy.sources", "").split(",")
+    SLEEP1 = System.getProperty("snakk.proxy.sleep1", "1000").toInt
+    SLEEP2 = System.getProperty("snakk.proxy.sleep2", "5000").toInt
+    DELAY = System.getProperty("snakk.proxy.delay", "15000").toInt
+    COUNT = System.getProperty("snakk.proxy.sleep", "20").toInt
+
+    log("ARGS: " + args.mkString)
+
+    for(
+      arg <- args
+    ) {
+      if(arg contains "snakk.proxy.dests") dests = arg.split("=").last.split(",")
+      if(arg contains "snakk.proxy.sources") sources = arg.split("=").last.split(",")
+      if(arg contains "snakk.proxy.sleep1") SLEEP1 = arg.split("=").last.toInt
+      if(arg contains "snakk.proxy.sleep2") SLEEP2 = arg.split("=").last.toInt
+      if(arg contains "snakk.proxy.delay") DELAY = arg.split("=").last.toInt
+      if(arg contains "snakk.proxy.count") COUNT = arg.split("=").last.toInt
+    }
+
+    log("dests: " + dests.mkString)
+    log("sources: " + sources.mkString)
+
+    var loop = 0
+    var sleep = SLEEP1
+    var lastTime = System.currentTimeMillis()
+
+    while (loop < COUNT) {
+      var hadOne = false // when true, it won't sleep
+
+      try {
+        for (
+          dest <- dests;
+          source <- sources
+        )
+          if(checkAndProxy(dest, source)) {
+            lastTime = System.currentTimeMillis()
+            hadOne = true
+          }
+      } catch {
+        case t  : Throwable => log(t.toString)
+      }
+
+      if(! hadOne) {
+        // short sleep or long sleep
+        if(System.currentTimeMillis() - lastTime > DELAY) sleep = SLEEP2
+        else sleep=SLEEP1
+        loop += 1
+        Thread.sleep(sleep)
+      }
     }
   }
 
+  /** check one destination for one source and if any, do proxy and return true */
+  def checkAndProxy (dest:String, source:String) : Boolean = {
+    log(s"Checking $source for $dest")
+    val resp = Snakk.body(Snakk.url("http://" + source + "/snakk/check/" + dest))
 
-  def check (url:String) = {
-    val resp = Snakk.body(url)
+    if(resp.size > 1) {
+      log(s"... got $resp")
+
+      val rq = Snakk.requestFromJson(resp)
+
+      val r = doProxy(rq)
+
+      Snakk.body(Snakk.url("http://" + source + "/snakk/complete/" + rq.id, Map.empty, "POST"), Some(razie.js.tojsons(r.toJson)))
+      return true
+    }
+    else {
+      log(s"... got nothing")
+      return false
+    }
   }
 
+  def doProxy (rq:SnakkRequest) : SnakkResponse = {
+      log(s"... snakking ${rq.url}")
+      val u = rq.protocol + "://" + rq.url
+
+      // make the call
+      val uc = new URL(u).openConnection
+      for (a <- rq.headers) {
+        uc.setRequestProperty(a._1, a._2)
+      }
+
+      log("...hdr: " + uc.getHeaderFields)
+
+      val resCode = uc.getHeaderField(0)
+
+      val head = new mutable.HashMap[String,String]()
+
+      import scala.collection.JavaConversions._
+      for(x <- uc.getHeaderFields.entrySet().iterator())
+        if(x.getKey() != null)
+          head.put(x.getKey, x.getValue.mkString)
+
+      val in = uc.getInputStream
+
+      if (! resCode.endsWith("200 OK")) {
+        // todo - do something terrible
+      }
+
+//      val response = Snakk.body(u, if (content.length > 0) Some(content) else None)
+
+      val response = Comms.readStream (in)
+
+      log(s"... response ${first100(response)}")
+
+      val r = SnakkResponse(resCode, head.toMap, response, head("Content-Type").toString, rq.id)
+
+      return r
+  }
+
+
   def log (s:String) : Unit = {
-    System.out.println(DateTime.now.toString + " " +  s);
+    println("now - " + " " +  s);
+  }
+
+  def first100 (s:String) = {
+    if(s.length > 100) s.substring(0,100)
+    else s
   }
 
 }

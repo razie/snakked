@@ -11,6 +11,8 @@ import razie.xp.JsonWrapper
 import razie.xp.MyBeanSolver
 import com.razie.pub.comms.Comms
 
+import scala.collection.mutable
+
 /** 
  *  wraps an URL with some arguments to be passed in the call 
  *  
@@ -237,4 +239,51 @@ object Snakk {
   
   implicit def toD (orig:String) = new DString(orig)
   implicit def toi (d:DfltStringVal) : Int = d.toString.toInt
+
+  def requestFromJson (body:String) = {
+    val m = razie.js.parse(body)
+    val h = m("headers").asInstanceOf[Map[String, String]]
+    SnakkRequest (
+      m("protocol").toString,
+      m("method").toString,
+      m("url").toString,
+      h,
+      m("content").toString,
+      m("id").toString
+    )
+  }
+
+  def responseFromJson (body:String) = {
+    val m = razie.js.parse(body)
+    val h = m("headers").asInstanceOf[Map[String, String]]
+    val ctype = h("Content-Type").toString
+
+    SnakkResponse(m("responseCode").toString, h, m("content").toString, ctype, m("id").toString)
+  }
 }
+
+case class SnakkRequest (protocol: String, method: String, url: String, headers: Map[String, String], content: String, id:String = "") {
+  def toJson = {
+    val m = new mutable.HashMap[String, Any]()
+    m.put("id", id)
+    m.put("protocol", protocol)
+    m.put("method", method)
+    m.put("url", url)
+    m.put("headers", headers)
+    m.put("content", content)
+    m.toMap
+  }
+}
+
+case class SnakkResponse (responseCode:String, headers: Map[String, String], content: String, ctype:String, id:String="") {
+  def toJson = {
+    val m = new mutable.HashMap[String, Any]()
+    m.put("id", id)
+    m.put("responseCode", responseCode)
+    m.put("headers", headers)
+    m.put("content", content)
+    m.put("ctype", ctype)
+    m.toMap
+  }
+}
+
