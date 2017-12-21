@@ -257,7 +257,7 @@ object Snakk {
   val SSS = "SNAKKSNAKKSNAKK"
 
   def responseFromJson (body:String) = {
-    val x = body.split (SSS)
+    val x = body.split (SSS, 2)
     val m = razie.js.parse(x(0))
     val h = m("headers").asInstanceOf[Map[String, String]]
     val ctype = h("Content-Type").toString

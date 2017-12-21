@@ -23,8 +23,8 @@ object SnakkProxy {
 
   var SLEEP1 : Int = 1000 // short sleep
   var SLEEP2 : Int = 5000 // long sleep
-  var DELAY : Int = 15000 // for short sleep
-  var COUNT : Int = 20    // for testing
+  var DELAY : Int = 10000 // for short sleep
+  var RESTART : Int = 120000 // for testing
 
   def main (args : Array[String]) = {
     // are arguments set?
@@ -32,8 +32,8 @@ object SnakkProxy {
     sources = System.getProperty("snakk.proxy.sources", "").split(",")
     SLEEP1 = System.getProperty("snakk.proxy.sleep1", "1000").toInt
     SLEEP2 = System.getProperty("snakk.proxy.sleep2", "5000").toInt
-    DELAY = System.getProperty("snakk.proxy.delay", "15000").toInt
-    COUNT = System.getProperty("snakk.proxy.count", "20").toInt
+    DELAY = System.getProperty("snakk.proxy.delay", "10000").toInt
+    RESTART = System.getProperty("snakk.proxy.restart", "120000").toInt
 
     log("ARGS: " + args.mkString)
 
@@ -45,7 +45,7 @@ object SnakkProxy {
       if(arg contains "snakk.proxy.sleep1") SLEEP1 = arg.split("=").last.toInt
       if(arg contains "snakk.proxy.sleep2") SLEEP2 = arg.split("=").last.toInt
       if(arg contains "snakk.proxy.delay") DELAY = arg.split("=").last.toInt
-      if(arg contains "snakk.proxy.count") COUNT = arg.split("=").last.toInt
+      if(arg contains "snakk.proxy.restart") RESTART = arg.split("=").last.toInt
     }
 
     log("dests: " + dests.mkString)
@@ -54,8 +54,9 @@ object SnakkProxy {
     var loop = 0
     var sleep = SLEEP1
     var lastTime = System.currentTimeMillis()
+    var firstTime = System.currentTimeMillis()
 
-    while (loop < COUNT) {
+    while (System.currentTimeMillis() - firstTime < RESTART) {
       var hadOne = false // when true, it won't sleep
 
       try {
@@ -76,6 +77,7 @@ object SnakkProxy {
         if(System.currentTimeMillis() - lastTime > DELAY) sleep = SLEEP2
         else sleep=SLEEP1
         loop += 1
+        log("... sleep "+sleep/1000)
         Thread.sleep(sleep)
       }
     }
@@ -130,8 +132,6 @@ object SnakkProxy {
       if (! resCode.endsWith("200 OK")) {
         // todo - do something terrible
       }
-
-//      val response = Snakk.body(u, if (content.length > 0) Some(content) else None)
 
       val response = Comms.readStream (in)
 
