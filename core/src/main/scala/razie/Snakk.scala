@@ -264,7 +264,7 @@ object Snakk {
     val ctype = h("Content-Type").toString
     val dec =
       if(x(1).startsWith("SNAKK64")) Base64.decode(x(1).substring(7))
-      else x(1)
+      else x(1).getBytes()
 
     SnakkResponse(m("responseCode").toString, h, new String(dec, 0, dec.size), ctype, m("id").toString)
   }
