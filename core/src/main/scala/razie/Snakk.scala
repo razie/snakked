@@ -10,6 +10,7 @@ import razie.xp.JsonSolver
 import razie.xp.JsonWrapper
 import razie.xp.MyBeanSolver
 import com.razie.pub.comms.Comms
+import com.razie.pub.util.Base64
 
 import scala.collection.mutable
 
@@ -261,8 +262,9 @@ object Snakk {
     val m = razie.js.parse(x(0))
     val h = m("headers").asInstanceOf[Map[String, String]]
     val ctype = h("Content-Type").toString
+    val dec = Base64.decode(x(1))
 
-    SnakkResponse(m("responseCode").toString, h, x(1), ctype, m("id").toString)
+    SnakkResponse(m("responseCode").toString, h, new String(dec, 0, dec.size), ctype, m("id").toString)
   }
 }
 

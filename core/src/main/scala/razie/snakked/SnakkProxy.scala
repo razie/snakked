@@ -4,6 +4,7 @@ import java.io.{File, IOException, InputStream}
 import java.net.{MalformedURLException, URL, URLConnection}
 
 import com.razie.pub.comms.{CommRtException, Comms}
+import com.razie.pub.util.Base64
 import razie.base.AttrAccess
 import razie.{Snakk, SnakkRequest, SnakkResponse, js}
 
@@ -52,7 +53,7 @@ object SnakkProxy {
     log("sources: " + sources.mkString)
 
     var sleep = SLEEP2
-    var lastTime = System.currentTimeMillis()
+    var lastTime = System.currentTimeMillis() - DELAY - 1 // go straight to long sleep mode
     var firstTime = System.currentTimeMillis()
 
     while (System.currentTimeMillis() - firstTime < RESTART) {
@@ -136,7 +137,7 @@ object SnakkProxy {
 
       log(s"... response ${first100(response)}")
 
-      val r = SnakkResponse(resCode, head.toMap, response, head("Content-Type").toString, rq.id)
+      val r = SnakkResponse(resCode, head.toMap, Base64.encodeBytes(response.getBytes), head("Content-Type").toString, rq.id)
 
       return r
   }
