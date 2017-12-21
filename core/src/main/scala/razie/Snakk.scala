@@ -262,10 +262,15 @@ object Snakk {
     val m = razie.js.parse(x(0))
     val h = m("headers").asInstanceOf[Map[String, String]]
     val ctype = h("Content-Type").toString
-    val dec = Base64.decode(x(1))
+    val dec =
+      if(x(1).startsWith("SNAKK64")) Base64.decode(x(1).substring(7))
+      else x(1)
 
     SnakkResponse(m("responseCode").toString, h, new String(dec, 0, dec.size), ctype, m("id").toString)
   }
+
+  def isText (ctype:String) =
+    ctype.contains ("text") || ctype.contains ("html") || ctype.contains ("script")
 }
 
 case class SnakkRequest (protocol: String, method: String, url: String, headers: Map[String, String], content: String, id:String = "") {
