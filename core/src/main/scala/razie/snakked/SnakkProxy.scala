@@ -51,8 +51,7 @@ object SnakkProxy {
     log("dests: " + dests.mkString)
     log("sources: " + sources.mkString)
 
-    var loop = 0
-    var sleep = SLEEP1
+    var sleep = SLEEP2
     var lastTime = System.currentTimeMillis()
     var firstTime = System.currentTimeMillis()
 
@@ -72,14 +71,13 @@ object SnakkProxy {
         case t  : Throwable => log(t.toString)
       }
 
-      if(! hadOne) {
-        // short sleep or long sleep
-        if(System.currentTimeMillis() - lastTime > DELAY) sleep = SLEEP2
-        else sleep=SLEEP1
-        loop += 1
-        log("... sleep "+sleep/1000)
-        Thread.sleep(sleep)
-      }
+      // short sleep or long sleep
+      if(hadOne) sleep = 0
+      else if(System.currentTimeMillis() - lastTime > DELAY && sleep < SLEEP2) sleep = sleep + SLEEP2/5
+      else sleep=SLEEP1
+
+      log("... sleep "+sleep/1000)
+      if(sleep > 0) Thread.sleep(sleep)
     }
   }
 
