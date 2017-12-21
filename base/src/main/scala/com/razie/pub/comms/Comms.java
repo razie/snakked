@@ -222,6 +222,34 @@ public class Comms {
   /**
    * read the given stream into a String and return the string. It will read and concatenate chunks
    * of 100 bytes.
+   *
+   * @param fis an input stream
+   * @return a string containing the text read from the stream. It's null if i couldn't read the
+   *         file.
+   */
+  public static ByteArray readStreamBytes(InputStream fis) {
+    try {
+      byte[] buff = new byte[ByteArray.BUFF_QUOTA];
+      int n = 0;
+      ByteArray xml = new ByteArray();
+      while ((n = fis.read(buff, 0, ByteArray.BUFF_QUOTA)) > 0) {
+        xml.append(buff, n);
+      }
+      return xml;
+    } catch (Exception e) { // an error occurs ...
+      throw new RuntimeException("Cannot read from input stream ...", e);
+    } finally {
+      try {
+        fis.close();
+      } catch (IOException e) {
+        // do nothing here ...
+      }
+    }
+  }
+
+  /**
+   * read the given stream into a String and return the string. It will read and concatenate chunks
+   * of 100 bytes.
    * 
    * @param fis an input stream
    * @return a string containing the text read from the stream. It's null if i couldn't read the

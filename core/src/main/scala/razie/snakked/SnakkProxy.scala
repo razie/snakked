@@ -133,14 +133,16 @@ object SnakkProxy {
         // todo - do something terrible
       }
 
-      val response = Comms.readStream (in)
+    val response = Comms.readStreamBytes (in)
+//      val response = Comms.readStream(in)
 
-      log(s"... response ${first100(response)}")
+      log(s"... response ${response}")
+//      log(s"... response ${first100(response)}")
 
       val ctype = head("Content-Type").toString
       val content =
-        if(false && Snakk.isText(ctype)) response
-        else "SNAKK64" + Base64.encodeBytes(response.getBytes)
+        if(false && Snakk.isText(ctype)) response.toString
+        else "SNAKK64" + Base64.encodeBytes(response.getData())
 
       val r = SnakkResponse(resCode, head.toMap, content, head("Content-Type").toString, rq.id)
 

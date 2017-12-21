@@ -21,6 +21,8 @@ public class ByteArray {
         reset();
     }
 
+    public byte[] getData() { return data; }
+
     public void append(byte[] newData, int lenght) {
         if (data.length - size < lenght) { // expand it...
             int n = size + lenght;
