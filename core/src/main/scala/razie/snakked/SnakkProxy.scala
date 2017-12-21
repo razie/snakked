@@ -74,6 +74,7 @@ object SnakkProxy {
       // short sleep or long sleep
       if(hadOne) sleep = 0
       else if(System.currentTimeMillis() - lastTime > DELAY && sleep < SLEEP2) sleep = sleep + SLEEP2/5
+      else if(System.currentTimeMillis() - lastTime > DELAY ) sleep = SLEEP2
       else sleep=SLEEP1
 
       log("... sleep "+sleep/1000)
