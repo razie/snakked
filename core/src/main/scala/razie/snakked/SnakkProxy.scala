@@ -139,7 +139,7 @@ object SnakkProxy {
 
       val ctype = head("Content-Type").toString
       val content =
-        if(Snakk.isText(ctype)) response
+        if(false && Snakk.isText(ctype)) response
         else "SNAKK64" + Base64.encodeBytes(response.getBytes)
 
       val r = SnakkResponse(resCode, head.toMap, content, head("Content-Type").toString, rq.id)
