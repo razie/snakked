@@ -56,7 +56,8 @@ public class Comms {
       if (content != null && content.length() > 0) {
         dataToWrite = content;
       }
-      System.out.println("POSTING:"+dataToWrite);
+      logger.trace(3, "POSTING:"+dataToWrite);
+      logger.trace(3, "POSTING: "+dataToWrite.length() + " bytes");
       wr.write(dataToWrite);
       wr.flush();
 
