@@ -1,20 +1,25 @@
+/**
+  *  ____    __    ____  ____  ____,,___     ____  __  __  ____
+  * ( __ \  /__\  (_   )(_  _)( ___)/ __)   (  _ \(  )(  )(  _ \          Read
+  *  )   / /(__)\  / /_  _)(_  )__) \__ \    )___/ )(__)(  ) _ <    README.txt
+  * (_)\_)(__)(__)(____)(____)(____)(___/   (__)  (______)(____/   LICENSE.txt
+  **/
 package razie.snakked
 
-import java.io.{File, IOException, InputStream}
-import java.net.{MalformedURLException, URL, URLConnection}
+import java.net.URL
 
-import com.razie.pub.comms.{CommRtException, Comms}
+import com.razie.pub.comms.Comms
 import com.razie.pub.util.Base64
-import razie.base.AttrAccess
-import razie.{Snakk, SnakkRequest, SnakkResponse, js}
+import razie.{Snakk, SnakkRequest, SnakkResponse}
 
 import scala.collection.mutable
 
 /** a snakking proxy
   *
-  * snakk.proxy.to = URL to ping for snakk requests, separated by commas, like:
+  * snakk.proxy.sources = URL to ping for snakk requests, separated by commas, like:
+  * snakk.proxy.dests = snakk destinations managed by this proxy - selector when pinging
   *
-  * -D snakk.proxy.to=http://host1.me.com:9000,http://host2.me.com:9000
+  * -D snakk.proxy.dests=http://host1.me.com:9000,http://host2.me.com:9000
   *
   */
 object SnakkProxy {
@@ -72,7 +77,7 @@ object SnakkProxy {
         case t  : Throwable => log(t.toString)
       }
 
-      // short sleep or long sleep
+      // short sleep or long sleep. Also SLEEP2/5 will get there gradually
       if(hadOne) sleep = 0
       else if(System.currentTimeMillis() - lastTime > DELAY && sleep < SLEEP2) sleep = sleep + SLEEP2/5
       else if(System.currentTimeMillis() - lastTime > DELAY ) sleep = SLEEP2
@@ -85,7 +90,7 @@ object SnakkProxy {
 
   /** check one destination for one source and if any, do proxy and return true */
   def checkAndProxy (dest:String, source:String) : Boolean = {
-    log(s"Checking $source for $dest")
+    log(s"Checking $source for any requests for $dest")
     val resp = Snakk.body(Snakk.url("http://" + source + "/snakk/check/" + dest))
 
     if(resp.size > 1) {
@@ -97,6 +102,7 @@ object SnakkProxy {
 
       val content = razie.js.tojsons(r.toJson) + Snakk.SSS + r.content
 
+      // send result and complete request
       Snakk.body(Snakk.url("http://" + source + "/snakk/complete/" + rq.id, Map.empty, "POST"), Some(content))
       return true
     }
@@ -106,6 +112,7 @@ object SnakkProxy {
     }
   }
 
+  /** proxy one request */
   def doProxy (rq:SnakkRequest) : SnakkResponse = {
       log(s"... snakking ${rq.url}")
       val u = rq.protocol + "://" + rq.url
@@ -122,6 +129,7 @@ object SnakkProxy {
 
       val head = new mutable.HashMap[String,String]()
 
+    // flatten headers into a map
       import scala.collection.JavaConversions._
       for(x <- uc.getHeaderFields.entrySet().iterator())
         if(x.getKey() != null)
@@ -133,10 +141,11 @@ object SnakkProxy {
         // todo - do something terrible
       }
 
+    // read bytes to use UTF-8 encoding rather than jvm default
     val response = Comms.readStreamBytes (in)
 //      val response = Comms.readStream(in)
 
-      log(s"... response ${response}")
+      log(s"... response ${response.getData.size} bytes")
 //      log(s"... response ${first100(response)}")
 
       val ctype = head("Content-Type").toString
