@@ -5,6 +5,7 @@
  */
 package razie
 
+import scala.collection.mutable
 import scala.util.matching.Regex
 
 /** state machines have states, transitions and consume events */
@@ -112,7 +113,7 @@ object SM extends razie.Logging {
     implicit def fr3(t: Tuple1[String]): Transition =
       { state(t._1); NullTransition }
 
-    val mstates = razie.Mapi[String, State]()
+    val mstates = new mutable.HashMap[String, State]()
     val transitions: Seq[Transition] // TODO optimize
 
     def start: State
@@ -171,7 +172,7 @@ object SM extends razie.Logging {
     def echo(s: String)(sm: StateMachine, t: Transition, e: Event) =
       logger info "SM_LOG: event=" + e + " message=\"" + s + "\""
 
-    val stack = razie.Listi[Event]()
+    val stack = mutable.ListBuffer[Event]()
     def push(sm: StateMachine, t: Transition, e: Event) { e +=: stack }
     def pop(sm: StateMachine, t: Transition, e: Event) { stack remove 0 }
     def last = stack apply 0

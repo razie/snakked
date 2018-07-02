@@ -4,24 +4,15 @@
  */
 package com.razie.pub.comms;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
+import com.razie.pub.base.data.ByteArray;
+import com.razie.pub.base.log.Log;
+import razie.base.AttrAccess;
+
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.List;
-
-import razie.base.AttrAccess;
-
-import com.razie.pub.base.data.ByteArray;
-import com.razie.pub.base.log.Log;
 
 /**
  * communications utils
@@ -32,6 +23,8 @@ import com.razie.pub.base.log.Log;
  * 
  */
 public class Comms {
+  public final static long MAX_BUF_SIZE=8L * 1024L * 1024L; // 8m bytes per request... more than enough?
+  public final static int MAX_TIMEOUT=15000; // 15 sec timeout
 
   /**
    * Stream the response of a URL.
@@ -44,6 +37,9 @@ public class Comms {
     try {
       InputStream in = null;
       URLConnection uc = (new URL(url)).openConnection();
+      uc.setConnectTimeout(MAX_TIMEOUT);
+      uc.setReadTimeout(MAX_TIMEOUT);
+
       // see http://www.exampledepot.com/egs/java.net/Post.html
       uc.setDoOutput(true);
 
@@ -123,13 +119,15 @@ public class Comms {
   public static URLConnection streamUrlA(String url, AttrAccess... httpArgs) {
     try {
         URLConnection uc = (new URL(url)).openConnection();
+      uc.setConnectTimeout(MAX_TIMEOUT);
+      uc.setReadTimeout(MAX_TIMEOUT);
         if (httpArgs.length > 0 && httpArgs[0] != null) {
           for (String a : httpArgs[0].getPopulatedAttr())
             uc.setRequestProperty(a, httpArgs[0].sa(a));
         }
         logger.trace(3, "hdr: ", uc.getHeaderFields());
         String resCode = uc.getHeaderField(0);
-        if (!resCode.endsWith("200 OK")) {
+        if (resCode == null || !resCode.endsWith("200 OK")) {
           String msg = "Could not fetch data from url " + url + ", resCode=" + resCode;
           logger.trace(3, msg);
           CommRtException rte = new CommRtException(msg);
@@ -176,6 +174,8 @@ public class Comms {
         in = (new URL(url)).openStream();
       } else if (url.startsWith("http:")) {
         URLConnection uc = (new URL(url)).openConnection();
+        uc.setConnectTimeout(MAX_TIMEOUT);
+        uc.setReadTimeout(MAX_TIMEOUT);
         if (httpArgs.length > 0 && httpArgs[0] != null) {
           for (String a : httpArgs[0].getPopulatedAttr())
             uc.setRequestProperty(a, httpArgs[0].sa(a));
@@ -232,7 +232,7 @@ public class Comms {
       byte[] buff = new byte[ByteArray.BUFF_QUOTA];
       int n = 0;
       ByteArray xml = new ByteArray();
-      while ((n = fis.read(buff, 0, ByteArray.BUFF_QUOTA)) > 0) {
+      while (xml.size() < MAX_BUF_SIZE && (n = fis.read(buff, 0, ByteArray.BUFF_QUOTA)) > 0) {
         xml.append(buff, n);
       }
       return xml;
@@ -256,23 +256,7 @@ public class Comms {
    *         file.
    */
   public static String readStream(InputStream fis) {
-    try {
-      byte[] buff = new byte[ByteArray.BUFF_QUOTA];
-      int n = 0;
-      ByteArray xml = new ByteArray();
-      while ((n = fis.read(buff, 0, ByteArray.BUFF_QUOTA)) > 0) {
-        xml.append(buff, n);
-      }
-      return xml.toString();
-    } catch (Exception e) { // an error occurs ...
-      throw new RuntimeException("Cannot read from input stream ...", e);
-    } finally {
-      try {
-        fis.close();
-      } catch (IOException e) {
-        // do nothing here ...
-      }
-    }
+    return readStreamBytes(fis).toString();
   }
 
   /**
@@ -288,7 +272,7 @@ public class Comms {
       byte[] buff = new byte[ByteArray.BUFF_QUOTA];
       int n = 0;
       ByteArray xml = new ByteArray();
-      while ((n = fis.read(buff, 0, ByteArray.BUFF_QUOTA)) > 0) {
+      while (xml.size() < MAX_BUF_SIZE && (n = fis.read(buff, 0, ByteArray.BUFF_QUOTA)) > 0) {
         xml.append(buff, n);
       }
       return xml.toString();

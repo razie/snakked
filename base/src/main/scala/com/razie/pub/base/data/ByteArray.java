@@ -46,4 +46,8 @@ public class ByteArray {
         data = new byte[BUFF_QUOTA];
         size = 0;
     }
+
+    public int size() {
+        return size;
+    }
 }

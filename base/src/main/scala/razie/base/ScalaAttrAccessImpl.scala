@@ -5,11 +5,13 @@
  */
 package razie.base;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.ArrayList
+import java.util.Collections
+import java.util.HashMap
+import java.util.List
+import java.util.Map
+
+import scala.collection.mutable;
 //import razie.base.AttrAccess;
 import java.util.Properties;
 
@@ -86,7 +88,7 @@ abstract class ScalaAttrAccessImpl extends AttrAccess {
   }
 
   override def mapValues[A, B](f: (A) => B): Seq[B] = {
-    val aa = razie.Listi[B]()
+    val aa = mutable.ListBuffer[B]()
     this.sgetPopulatedAttr.foreach (x => aa append (f((this a x).asInstanceOf[A])))
     aa
   }

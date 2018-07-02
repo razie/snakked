@@ -1,5 +1,5 @@
 <projectDescription>
-  <name>snakk-core</name>
+  <name>snakk_core</name>
   <buildSpec>
     <buildCommand>
       <name>org.scala-ide.sdt.core.scalabuilder</name>

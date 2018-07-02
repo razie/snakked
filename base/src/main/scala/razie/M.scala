@@ -6,7 +6,9 @@
 package razie
 
 import scala.collection._
-import java.{ lang => jl, util => ju }
+import java.{lang => jl, util => ju}
+
+import scala.collection.mutable.ListBuffer
 
 /** I kept looking for a generic collection/iterable thing...and found that I was chasing Monads. 
  * 
@@ -123,7 +125,7 @@ object M {
     val i1 = x.iterator
     val i2 = y.iterator
     var b = false
-    val res = razie.Listi[C]()
+    val res = ListBuffer[C]()
 
     while (i1.hasNext && i2.hasNext && !b) {
       val x1 = i1.next
@@ -263,18 +265,3 @@ object MOLD {
 }
 
 
-/** it sucks to have to import the stupid long package name all the time... */
-object Mapi {
-   def apply [K,V] () = new scala.collection.mutable.HashMap [K, V] ()
-   
-   def immutable [K,V] (m:scala.collection.mutable.HashMap [K, V]) : Map[K,V] =
-      scala.collection.immutable.Map[K,V]() ++ m
-}
-
-/** it sucks to have to import the stupid long package name all the time...when retrofitting old code */
-object Listi {
-   def apply [K] () = new scala.collection.mutable.ListBuffer [K] ()
-   
-   def immutable [K] (m:scala.collection.mutable.ListBuffer [K]) : List[K] =
-      List[K]() ++ m
-}

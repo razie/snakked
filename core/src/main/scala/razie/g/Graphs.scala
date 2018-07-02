@@ -5,6 +5,8 @@
  */
 package razie.g
 
+import scala.collection.mutable.ListBuffer
+
 //-------------------------- simple (set) graphs, with structure induced on an existing set
 
 /** a graph is a set of nodes and links between these nodes. It's better though to forget this
@@ -131,7 +133,7 @@ trait GraphLike[N <: GNode[N, L], L <: GLink[N]] {
   }
 
   def filterNodes(f: N => Boolean): Seq[N] = {
-    val ret = razie.Listi[N]
+    val ret = new ListBuffer[N]()
     foreach ((x: N, v: Int) => { if (f(x)) ret append x }, (l: L, v: Int) => {})
     ret
   }

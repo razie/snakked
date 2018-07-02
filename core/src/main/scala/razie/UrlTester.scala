@@ -1,6 +1,6 @@
 package razie
 
-import org.scalatest.FlatSpec
+import org.scalatest.{FlatSpec, Matchers}
 import org.scalatest.matchers.ShouldMatchers
 import com.razie.pub.comms.CommRtException
 import java.net.URL
@@ -16,7 +16,7 @@ private object TestHelper {
  *  
  *  See class snakking.test.SampleWebTest for examples
  */
-trait UrlTester { this: FlatSpec with ShouldMatchers =>
+trait UrlTester { this: FlatSpec with Matchers =>
   import TestHelper._
 
   /** helper class, will add the test methods */
