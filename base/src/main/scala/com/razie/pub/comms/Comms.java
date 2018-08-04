@@ -118,15 +118,20 @@ public class Comms {
    */
   public static URLConnection streamUrlA(String url, AttrAccess... httpArgs) {
     try {
-        URLConnection uc = (new URL(url)).openConnection();
+      URLConnection uc = (new URL(url)).openConnection();
       uc.setConnectTimeout(MAX_TIMEOUT);
       uc.setReadTimeout(MAX_TIMEOUT);
+
         if (httpArgs.length > 0 && httpArgs[0] != null) {
           for (String a : httpArgs[0].getPopulatedAttr())
             uc.setRequestProperty(a, httpArgs[0].sa(a));
         }
+
+        uc.connect();
+
         logger.trace(3, "hdr: ", uc.getHeaderFields());
         String resCode = uc.getHeaderField(0);
+
         if (resCode == null || !resCode.endsWith("200 OK")) {
           String msg = "Could not fetch data from url " + url + ", resCode=" + resCode;
           logger.trace(3, msg);
