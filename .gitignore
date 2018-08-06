@@ -1,5 +1,6 @@
 bin
 .scala_dependencies
+.cache-*
 dist
 timestamp.txt
 project/boot
