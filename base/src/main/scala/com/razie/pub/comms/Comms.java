@@ -8,23 +8,24 @@ import com.razie.pub.base.data.ByteArray;
 import com.razie.pub.base.log.Log;
 import razie.base.AttrAccess;
 
+import javax.net.ssl.*;
+import java.security.cert.X509Certificate;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 
 /**
- * communications utils
- * 
- * TODO detailed docs
- * 
- * @author razvanc99
- * 
+ * communications utils - read streams, sockets and URLs
  */
 public class Comms {
   public final static long MAX_BUF_SIZE=8L * 1024L * 1024L; // 8m bytes per request... more than enough?
-  public final static int MAX_TIMEOUT=15000; // 15 sec timeout
+  public final static int MAX_TIMEOUT=30000; // 15 sec timeout
+
+  public static boolean trustAllInitialized = false;
 
   /**
    * Stream the response of a URL.
@@ -35,6 +36,7 @@ public class Comms {
    */
   public static URLConnection xpoststreamUrl2A(String url, AttrAccess httpArgs, String content) {
     try {
+      initTrustAll();
       InputStream in = null;
       URLConnection uc = (new URL(url)).openConnection();
       uc.setConnectTimeout(MAX_TIMEOUT);
@@ -60,32 +62,21 @@ public class Comms {
       logger.trace(3, "hdr: ", uc.getHeaderFields());
       String resCode = uc.getHeaderField(0);
 
-      if (resCode == null || !resCode.endsWith("200 OK")) {
+      if (resCode == null || !resCode.endsWith("200 OK") && !resCode.endsWith("204 No Content")) {
         String msg = "Could not fetch data from url " + url + ", resCode=" + resCode + ", content="+ readStream(((HttpURLConnection)uc).getErrorStream());
         logger.trace(3, msg);
-        RuntimeException rte = new RuntimeException(msg);
-        // if (uc.getContentType().endsWith("xml")) {
-        // // TODO replace with RiXmlUtils or XmlDoc
-        // DOMParser parser = new DOMParser();
-        // try {
-        // parser.parse(new InputSource(in));
-        // } catch (SAXException e) {
-        // RuntimeException iex = new RuntimeException("Error while processing document at "
-        // + url);
-        // iex.initCause(e);
-        // throw iex;
-        // }
-        // }
-        throw rte;
+        throw new CommRtException(msg);
       }
       return uc;
     } catch (MalformedURLException e) {
       RuntimeException iex = new IllegalArgumentException();
       iex.initCause(e);
       throw iex;
-    } catch (IOException e1) {
+    } catch (CommRtException re) {
+      throw re;
+    } catch (Exception e1) {
       // server/node down
-      throw new RuntimeException("Connection exception for url=" + url, e1);
+      throw new RuntimeException("Connection exception for url=" + url + "\n"+e1.getMessage(), e1);
     }
   }
 
@@ -118,6 +109,7 @@ public class Comms {
    */
   public static URLConnection streamUrlA(String url, AttrAccess... httpArgs) {
     try {
+      initTrustAll();
       URLConnection uc = (new URL(url)).openConnection();
       uc.setConnectTimeout(MAX_TIMEOUT);
       uc.setReadTimeout(MAX_TIMEOUT);
@@ -132,31 +124,19 @@ public class Comms {
         logger.trace(3, "hdr: ", uc.getHeaderFields());
         String resCode = uc.getHeaderField(0);
 
-        if (resCode == null || !resCode.endsWith("200 OK")) {
-          String msg = "Could not fetch data from url " + url + ", resCode=" + resCode;
-          logger.trace(3, msg);
-          CommRtException rte = new CommRtException(msg);
-          // if (uc.getContentType().endsWith("xml")) {
-          // // TODO replace with RiXmlUtils or XmlDoc
-          // DOMParser parser = new DOMParser();
-          // try {
-          // parser.parse(new InputSource(in));
-          // } catch (SAXException e) {
-          // RuntimeException iex = new
-          // CommRtException("Error while processing document at "
-          // + url);
-          // iex.initCause(e);
-          // throw iex;
-          // }
-          // }
-          throw rte;
-        }
+      if (resCode == null || !resCode.endsWith("200 OK") && !resCode.endsWith("204 No Content")) {
+        String msg = "Could not fetch data from url " + url + ", resCode=" + resCode + ", content="+ readStream(((HttpURLConnection)uc).getErrorStream());
+        logger.trace(3, msg);
+        throw new CommRtException(msg);
+      }
       return uc;
     } catch (MalformedURLException e) {
       RuntimeException iex = new IllegalArgumentException();
       iex.initCause(e);
       throw iex;
-    } catch (IOException e1) {
+    } catch (CommRtException re) {
+      throw re;
+    } catch (Exception e1) {
       // server/node down
       CommRtException rte = new CommRtException("Connection exception for url=" + url);
       rte.initCause(e1);
@@ -174,6 +154,7 @@ public class Comms {
    */
   public static InputStream streamUrl(String url, AttrAccess... httpArgs) {
     try {
+      initTrustAll();
       InputStream in = null;
       if (url.startsWith("file:")) {
         in = (new URL(url)).openStream();
@@ -188,24 +169,11 @@ public class Comms {
         logger.trace(3, "hdr: ", uc.getHeaderFields());
         String resCode = uc.getHeaderField(0);
         in = uc.getInputStream();
-        if (!resCode.endsWith("200 OK")) {
-          String msg = "Could not fetch data from url " + url + ", resCode=" + resCode;
+
+        if (resCode == null || !resCode.endsWith("200 OK") && !resCode.endsWith("204 No Content")) {
+          String msg = "Could not fetch data from url " + url + ", resCode=" + resCode + ", content="+ readStream(((HttpURLConnection)uc).getErrorStream());
           logger.trace(3, msg);
-          CommRtException rte = new CommRtException(msg);
-          // if (uc.getContentType().endsWith("xml")) {
-          // // TODO replace with RiXmlUtils or XmlDoc
-          // DOMParser parser = new DOMParser();
-          // try {
-          // parser.parse(new InputSource(in));
-          // } catch (SAXException e) {
-          // RuntimeException iex = new
-          // CommRtException("Error while processing document at "
-          // + url);
-          // iex.initCause(e);
-          // throw iex;
-          // }
-          // }
-          throw rte;
+          throw new RuntimeException(msg);
         }
       } else {
         File file = new File(url);
@@ -216,7 +184,9 @@ public class Comms {
       RuntimeException iex = new IllegalArgumentException();
       iex.initCause(e);
       throw iex;
-    } catch (IOException e1) {
+    } catch (CommRtException re) {
+      throw re;
+    } catch (Exception e1) {
       // server/node down
       CommRtException rte = new CommRtException("Connection exception for url=" + url);
       rte.initCause(e1);
@@ -233,7 +203,7 @@ public class Comms {
    *         file.
    */
   public static ByteArray readStreamBytes(InputStream fis) {
-    try {
+    if(fis != null) try {
       byte[] buff = new byte[ByteArray.BUFF_QUOTA];
       int n = 0;
       ByteArray xml = new ByteArray();
@@ -245,11 +215,11 @@ public class Comms {
       throw new RuntimeException("Cannot read from input stream ...", e);
     } finally {
       try {
-        fis.close();
+        if(fis != null) fis.close();
       } catch (IOException e) {
         // do nothing here ...
       }
-    }
+    } else return new ByteArray();
   }
 
   /**
@@ -337,4 +307,45 @@ public class Comms {
   }
 
   static Log logger = Log.factory.create(Comms.class);
+
+  /** from http://www.nakov.com/blog/2009/07/16/disable-certificate-validation-in-java-ssl-connections/ */
+  public static synchronized void initTrustAll() throws NoSuchAlgorithmException, KeyManagementException {
+      if (!trustAllInitialized) {
+        logger.log("initTrustAll...");
+
+        trustAllInitialized = true;
+
+        // Create a trust manager that does not validate certificate chains
+        TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
+          public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+            return null;
+          }
+
+          public void checkClientTrusted(X509Certificate[] certs, String authType) {
+          }
+
+          public void checkServerTrusted(X509Certificate[] certs, String authType) {
+          }
+        }
+        };
+
+        // Install the all-trusting trust manager
+        SSLContext sc = SSLContext.getInstance("TLS");
+        sc.init(null, trustAllCerts, new java.security.SecureRandom());
+
+        sc = SSLContext.getInstance("SSL");
+        sc.init(null, trustAllCerts, new java.security.SecureRandom());
+        HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+
+        // Create all-trusting host name verifier
+        HostnameVerifier allHostsValid = new HostnameVerifier() {
+          public boolean verify(String hostname, SSLSession session) {
+            return true;
+          }
+        };
+
+        // Install the all-trusting host verifier
+        HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
+      }
+    }
 }

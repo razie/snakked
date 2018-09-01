@@ -40,6 +40,8 @@ object js {
       t._2 match {
         case m: Map[_, _] => o.put(t._1.toString, tojson(m))
         case s: String => o.put(t._1.toString, s)
+        case i: Int => o.put(t._1.toString, i)
+        case f: Float => o.put(t._1.toString, f)
         case l: List[_] => o.put(t._1.toString, tojson(l))
         case h @ _ => o.put(t._1.toString, h.toString)
       }
@@ -55,6 +57,8 @@ object js {
         case s: Map[_, _] => o.put(tojson(s))
         case l: List[_] => o.put(tojson(l))
         case s: String => o.put(s)
+        case i: Int => o.put(i)
+        case f: Float => o.put(f)
         case s: JSONObject => o.put(s)
       }
     }
@@ -111,6 +115,8 @@ object js {
       v match {
         case m: Map[_, _] => o += (" "*i) + q + k.toString  + q+ ":"+tojsons(m, i+1) + comma
         case s: String => o += (" "*i) + q + k.toString + q+ ":"+ q(s) + comma
+        case ix: Int => o += (" "*i) + q + k.toString + q+ ":"+ ix + comma
+        case fx: Float => o += (" "*i) + q + k.toString + q+ ":"+ fx + comma
         case l: List[_] => o += " "*i + q + k.toString + q + ":"+tojsons(l, i+1) + comma
         case h @ _ => o += " "*i + q + k.toString + q+ ":" + q(h.toString) + comma
       }
@@ -130,6 +136,8 @@ object js {
         case m: Map[_, _] => o += tojsons(m, i+1) +comma+"\n"
         case l: List[_] => o += tojsons(l, i+1) +comma+"\n"
         case s: String => o += " "*i+q(s) +comma
+        case ix: Int => o += " "*i+ix +comma
+        case fx: Float => o += " "*i+fx +comma
         case s: JSONObject => o += " "*i+q(s.toString) +comma
         case s => o += " "*i+q(s.toString) +comma
       }

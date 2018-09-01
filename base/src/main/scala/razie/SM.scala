@@ -27,19 +27,19 @@ object SM extends razie.Logging {
       if (other.isInstanceOf[Many]) other.asInstanceOf[Many] ~= (this) else this == other
   }
 
-  object SState {
-    def apply (name: String) = new SState (name)
+  object StrState {
+    def apply (name: String) = new StrState (name)
 //    def unapply ()
   }
 
-  class SState(val name: String) extends State { require(name != null) }
-  object NullState extends SState("Null")
-  case class REState(regex: Regex) extends SState(regex.toString) with Many {
+  class StrState(val name: String) extends State { require(name != null) }
+  object NullState extends StrState("Null")
+  case class REState(regex: Regex) extends StrState(regex.toString) with Many {
     override def equals(other: Any): Boolean = this ~= other
     override def ~=(other: Any): Boolean = 
       // TODO stupid matching :)))
-      if (other.isInstanceOf[SState]) 
-        other.asInstanceOf[SState].name matches regex.pattern.pattern 
+      if (other.isInstanceOf[StrState])
+        other.asInstanceOf[StrState].name matches regex.pattern.pattern
       else false
   }
 
@@ -121,7 +121,7 @@ object SM extends razie.Logging {
 
     def state(s: String): State = mstates get s match {
       case Some(st) => st
-      case None => { val x = new SState(s); mstates.put(s, x); x }
+      case None => { val x = new StrState(s); mstates.put(s, x); x }
     }
 
     import razie.M._
