@@ -68,10 +68,6 @@ object Log extends razie.Logging {
 
 }
 
-object Audit {
-  def apply(f: => Any) = Log.audit (f.toString)
-}
-
 object Debug {
   def apply(f: => Any) = Log.debug(f.toString)
   
