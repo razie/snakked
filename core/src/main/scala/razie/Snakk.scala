@@ -147,11 +147,14 @@ object Snakk {
     def \\@(name: String): List[String]
   }
 
-  /** OO wrapper for self-solving XP elements HEY this is like an open monad :) */
+  /** List wrapper for self-solving XP elements */
   class ListWrapper[T](val nodes: List[T], val ctx: XpSolver[T]) extends BaseWrapper[T] {
     def xpl  (path:String) = nodes.flatMap(n => XP[T](path).xpl(ctx, n))
     def xpa  (path:String) = nodes.headOption.map(n => XP[T](path).xpa(ctx, n))
     def xpla (path:String) = nodes.flatMap(n => XP[T](path).xpla(ctx, n))
+
+    def wrap (nodes:List[T]) = new ListWrapper(nodes, ctx)
+    def wrap (node:T) = new Wrapper(node, ctx)
 
     /** the list of children with the respective tag */
     def \(name: String): ListWrapper[T] = wrapList(nodes.flatMap(n => XP[T]("*/" + name).xpl(ctx, n)), ctx)
@@ -193,7 +196,10 @@ object Snakk {
     def xpl  (path:String) = XP[T](path).xpl(ctx, node)
     def xpa  (path:String) = XP[T](path).xpa(ctx, node)
     def xpla (path:String) = XP[T](path).xpla(ctx, node)
-    
+
+    def wrap (nodes:List[T]) = new ListWrapper(nodes, ctx)
+    def wrap (node:T) = new Wrapper(node, ctx)
+
     /** the list of children with the respective tag */
     def \(name: String): ListWrapper[T] = wrapList(XP[T](name).xpl(ctx, node), ctx)
     /** the head of the list of children with the respective tag */

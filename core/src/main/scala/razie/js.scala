@@ -94,6 +94,7 @@ object js {
       t match {
         case m: Map[_, _] => o.append(jt(m, path)(f))
         case l: List[_] => o.append(jt(l, path)(f))
+        case x@_ => o.append(x)
       }
     }
     o.toList
