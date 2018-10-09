@@ -17,6 +17,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.util.function.Consumer;
 
 /**
  * communications utils - read streams, sockets and URLs
@@ -25,7 +26,18 @@ public class Comms {
   public final static long MAX_BUF_SIZE=8L * 1024L * 1024L; // 8m bytes per request... more than enough?
   public final static int MAX_TIMEOUT=30000; // 15 sec timeout
 
+  static Log logger = Log.factory.create(Comms.class);
+
   public static boolean trustAllInitialized = false;
+
+  public static Consumer<URLConnection> dfltHandler = (URLConnection uc) -> {
+    String resCode = uc.getHeaderField(0);
+    if (resCode == null || !resCode.endsWith("200 OK") && !resCode.endsWith("204 No Content")) {
+      String msg = "Could not fetch data from url " + uc.getURL().toString() + ", resCode=" + resCode + ", content="+ readStream(((HttpURLConnection)uc).getErrorStream());
+      logger.trace(3, msg);
+      throw new CommRtException(msg, uc);
+    }
+  };
 
   /**
    * Stream the response of a URL.
@@ -35,10 +47,11 @@ public class Comms {
    *         page or the contents of a local file. It's null if i couldn't read the file.
    */
   public static URLConnection xpoststreamUrl2A(String url, AttrAccess httpArgs, String content) {
+    URLConnection uc = null;
     try {
       initTrustAll();
       InputStream in = null;
-      URLConnection uc = (new URL(url)).openConnection();
+      uc = (new URL(url)).openConnection();
       uc.setConnectTimeout(MAX_TIMEOUT);
       uc.setReadTimeout(MAX_TIMEOUT);
 
@@ -60,13 +73,7 @@ public class Comms {
       wr.flush();
 
       logger.trace(3, "hdr: ", uc.getHeaderFields());
-      String resCode = uc.getHeaderField(0);
-
-      if (resCode == null || !resCode.endsWith("200 OK") && !resCode.endsWith("204 No Content")) {
-        String msg = "Could not fetch data from url " + url + ", resCode=" + resCode + ", content="+ readStream(((HttpURLConnection)uc).getErrorStream());
-        logger.trace(3, msg);
-        throw new CommRtException(msg);
-      }
+      dfltHandler.accept(uc);
       return uc;
     } catch (MalformedURLException e) {
       RuntimeException iex = new IllegalArgumentException();
@@ -74,6 +81,14 @@ public class Comms {
       throw iex;
     } catch (CommRtException re) {
       throw re;
+    } catch (FileNotFoundException nef) { // 404 causes this - idiots !!!
+      CommRtException rte = new CommRtException("NotFound exception for url=" + url, uc);
+      rte.initCause(nef);
+      throw rte;
+    } catch (IOException io) { // 400 causes this - idiots !!! !!!
+      CommRtException rte = new CommRtException("IO exception for url=" + url, uc);
+      rte.initCause(io);
+      throw rte;
     } catch (Exception e1) {
       // server/node down
       throw new RuntimeException("Connection exception for url=" + url + "\n"+e1.getMessage(), e1);
@@ -108,9 +123,10 @@ public class Comms {
    *         page or the contents of a local file. It's null if i couldn't read the file.
    */
   public static URLConnection streamUrlA(String url, AttrAccess... httpArgs) {
+    URLConnection uc = null;
     try {
       initTrustAll();
-      URLConnection uc = (new URL(url)).openConnection();
+      uc = (new URL(url)).openConnection();
       uc.setConnectTimeout(MAX_TIMEOUT);
       uc.setReadTimeout(MAX_TIMEOUT);
 
@@ -122,13 +138,7 @@ public class Comms {
         uc.connect();
 
         logger.trace(3, "hdr: ", uc.getHeaderFields());
-        String resCode = uc.getHeaderField(0);
-
-      if (resCode == null || !resCode.endsWith("200 OK") && !resCode.endsWith("204 No Content")) {
-        String msg = "Could not fetch data from url " + url + ", resCode=" + resCode + ", content="+ readStream(((HttpURLConnection)uc).getErrorStream());
-        logger.trace(3, msg);
-        throw new CommRtException(msg);
-      }
+      dfltHandler.accept(uc);
       return uc;
     } catch (MalformedURLException e) {
       RuntimeException iex = new IllegalArgumentException();
@@ -136,9 +146,17 @@ public class Comms {
       throw iex;
     } catch (CommRtException re) {
       throw re;
+    } catch (FileNotFoundException nef) { // 404 causes this - idiots !!!
+      CommRtException rte = new CommRtException("NotFound exception for url=" + url, uc);
+      rte.initCause(nef);
+      throw rte;
+    } catch (IOException io) { // 400 causes this - idiots !!! !!!
+      CommRtException rte = new CommRtException("IO exception for url=" + url, uc);
+      rte.initCause(io);
+      throw rte;
     } catch (Exception e1) {
       // server/node down
-      CommRtException rte = new CommRtException("Connection exception for url=" + url);
+      CommRtException rte = new CommRtException("Connection exception for url=" + url, (URLConnection)null);
       rte.initCause(e1);
       throw rte;
     }
@@ -153,13 +171,15 @@ public class Comms {
    *         page or the contents of a local file. It's null if i couldn't read the file.
    */
   public static InputStream streamUrl(String url, AttrAccess... httpArgs) {
+    URLConnection uc = null;
+
     try {
       initTrustAll();
       InputStream in = null;
       if (url.startsWith("file:")) {
         in = (new URL(url)).openStream();
-      } else if (url.startsWith("http:")) {
-        URLConnection uc = (new URL(url)).openConnection();
+      } else if (url.startsWith("http:") || url.startsWith("https:")) {
+        uc = (new URL(url)).openConnection();
         uc.setConnectTimeout(MAX_TIMEOUT);
         uc.setReadTimeout(MAX_TIMEOUT);
         if (httpArgs.length > 0 && httpArgs[0] != null) {
@@ -167,14 +187,9 @@ public class Comms {
             uc.setRequestProperty(a, httpArgs[0].sa(a));
         }
         logger.trace(3, "hdr: ", uc.getHeaderFields());
-        String resCode = uc.getHeaderField(0);
         in = uc.getInputStream();
 
-        if (resCode == null || !resCode.endsWith("200 OK") && !resCode.endsWith("204 No Content")) {
-          String msg = "Could not fetch data from url " + url + ", resCode=" + resCode + ", content="+ readStream(((HttpURLConnection)uc).getErrorStream());
-          logger.trace(3, msg);
-          throw new RuntimeException(msg);
-        }
+        dfltHandler.accept(uc);
       } else {
         File file = new File(url);
         in = file.toURL().openStream();
@@ -186,9 +201,17 @@ public class Comms {
       throw iex;
     } catch (CommRtException re) {
       throw re;
+    } catch (FileNotFoundException nef) { // 404 causes this - idiots !!!
+      CommRtException rte = new CommRtException("NotFound exception for url=" + url, uc);
+      rte.initCause(nef);
+      throw rte;
+    } catch (IOException io) { // 400 causes this - idiots !!! !!!
+      CommRtException rte = new CommRtException("IO exception for url=" + url, uc);
+      rte.initCause(io);
+      throw rte;
     } catch (Exception e1) {
       // server/node down
-      CommRtException rte = new CommRtException("Connection exception for url=" + url);
+      CommRtException rte = new CommRtException("Connection exception for url=" + url, (URLConnection)null);
       rte.initCause(e1);
       throw rte;
     }
@@ -305,8 +328,6 @@ public class Comms {
     }
     return null;
   }
-
-  static Log logger = Log.factory.create(Comms.class);
 
   /** from http://www.nakov.com/blog/2009/07/16/disable-certificate-validation-in-java-ssl-connections/ */
   public static synchronized void initTrustAll() throws NoSuchAlgorithmException, KeyManagementException {

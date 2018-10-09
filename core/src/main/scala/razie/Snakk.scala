@@ -4,6 +4,8 @@
  */
 package razie
 
+import java.net.URLConnection
+
 import org.json.JSONObject
 import razie.xp.BeanSolver
 import razie.xp.JsonSolver
@@ -22,7 +24,12 @@ import scala.collection.mutable
  *  @param method  GET/POST/FORM
  *  @param formData added to the POST request
  */
-class SnakkUrl(val url: java.net.URL, val httpAttr: Map[String,String]=Map.empty, val method:String="GET", val formData : Map[String,String]=Map.empty) {
+class SnakkUrl(
+                val url: java.net.URL,
+                val httpAttr: Map[String,String]=Map.empty,
+                val method:String="GET",
+                val formData : Map[String,String]=Map.empty) {
+
   /** transform this URL in one with basic authentication */
   def basic(user: String, password: String) =
     new SnakkUrl(url, httpAttr++Map("Authorization" -> ("Basic " + new sun.misc.BASE64Encoder().encode((user + ":" + password).getBytes))), method, formData)

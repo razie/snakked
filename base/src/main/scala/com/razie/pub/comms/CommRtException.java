@@ -4,6 +4,8 @@
  */
 package com.razie.pub.comms;
 
+import java.net.URLConnection;
+
 /**
  * Communications-related exception
  * 
@@ -11,8 +13,11 @@ package com.razie.pub.comms;
  */
 @SuppressWarnings("serial")
 public class CommRtException extends RuntimeException {
-    public CommRtException(String message) {
+    public URLConnection uc = null;
+
+    public CommRtException(String message, URLConnection uc) {
         super(message);
+        this.uc = uc;
     }
 
     public CommRtException(String message, Throwable cause) {
