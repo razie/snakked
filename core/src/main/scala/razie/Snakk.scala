@@ -60,11 +60,15 @@ object Snakk {
     * @param postContent optionally some content for post
     */
   def conn(url: SnakkUrl, postContent:Option[String]=None) = url.method match {
-    case "GET" => Comms.streamUrlA(url.url.toString, AA map url.httpAttr)
-    case "POST" =>Comms.xpoststreamUrl2A(url.url.toString, AA map url.httpAttr, postContent.getOrElse(""))
+    case "GET"  => Comms.streamUrlA(url.url.toString, AA map url.httpAttr)
+
+    case "POST" | "PATCH" =>
+      Comms.xpoststreamUrl2A(url.method, url.url.toString, AA map url.httpAttr, postContent.getOrElse(""))
+
     case "FORM" => {
       val content = razie.AA.map(url.formData).addToUrl("")
       Comms.xpoststreamUrl2A(
+        "POST",
         url.url.toString,
         AA.map(url.httpAttr++Map("Content-Type" -> "application/x-www-form-urlencoded",
           "Content-Length" -> content.length.toString,
@@ -79,10 +83,14 @@ object Snakk {
     */
   def body(url: SnakkUrl, postContent:Option[String]=None) = url.method match {
     case "GET" => Option(Comms.readUrl(url.url.toString, AA map url.httpAttr)).getOrElse("")
-    case "POST" =>Option(Comms.readStream(Comms.xpoststreamUrl2(url.url.toString, AA map url.httpAttr, postContent.getOrElse("")))).getOrElse("")
+
+    case "POST" | "PATCH" =>
+      Option(Comms.readStream(Comms.xpoststreamUrl2(url.method, url.url.toString, AA map url.httpAttr, postContent.getOrElse("")))).getOrElse("")
+
     case "FORM" => {
       val content = razie.AA.map(url.formData).addToUrl("")
       Option(Comms.readStream(Comms.xpoststreamUrl2(
+        "POST",
           url.url.toString, 
           AA.map(url.httpAttr++Map("Content-Type" -> "application/x-www-form-urlencoded",
                        "Content-Length" -> content.length.toString,

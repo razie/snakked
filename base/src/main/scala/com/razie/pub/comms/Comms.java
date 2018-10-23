@@ -9,6 +9,8 @@ import com.razie.pub.base.log.Log;
 import razie.base.AttrAccess;
 
 import javax.net.ssl.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.security.cert.X509Certificate;
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -17,6 +19,9 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -40,20 +45,52 @@ public class Comms {
   };
 
   /**
+   * hack to allow PATCH - see https://stackoverflow.com/questions/25163131/httpurlconnection-invalid-http-method-patch
+   *
+   * @param methods
+   */
+  private static void allowMethods(String... methods) {
+    try {
+      Field methodsField = HttpURLConnection.class.getDeclaredField("methods");
+
+      Field modifiersField = Field.class.getDeclaredField("modifiers");
+      modifiersField.setAccessible(true);
+      modifiersField.setInt(methodsField, methodsField.getModifiers() & ~Modifier.FINAL);
+
+      methodsField.setAccessible(true);
+
+      String[] oldMethods = (String[]) methodsField.get(null);
+      Set<String> methodsSet = new LinkedHashSet<>(Arrays.asList(oldMethods));
+      methodsSet.addAll(Arrays.asList(methods));
+      String[] newMethods = methodsSet.toArray(new String[0]);
+
+      methodsField.set(null/*static field*/, newMethods);
+    } catch (NoSuchFieldException | IllegalAccessException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  /**
    * Stream the response of a URL.
    *
+   * @param verb - pass only if it's PATCH
    * @param url can be local or remote
    * @return a string containing the text read from the URL. can be the result of a servlet, a web
    *         page or the contents of a local file. It's null if i couldn't read the file.
    */
-  public static URLConnection xpoststreamUrl2A(String url, AttrAccess httpArgs, String content) {
-    URLConnection uc = null;
+  public static URLConnection xpoststreamUrl2A(String verb, String url, AttrAccess httpArgs, String content) {
+    HttpURLConnection uc = null;
     try {
       initTrustAll();
       InputStream in = null;
-      uc = (new URL(url)).openConnection();
+      uc = (HttpURLConnection) (new URL(url)).openConnection();
       uc.setConnectTimeout(MAX_TIMEOUT);
       uc.setReadTimeout(MAX_TIMEOUT);
+
+      if("PATCH".equals(verb)) {
+        allowMethods("PATCH");
+        uc.setRequestMethod("PATCH");
+      }
 
       // see http://www.exampledepot.com/egs/java.net/Post.html
       uc.setDoOutput(true);
@@ -97,14 +134,15 @@ public class Comms {
 
   /**
    * Stream the response of a URL.
-   * 
+   *
+   * @param verb - pass only if it's PATCH
    * @param url can be local or remote
    * @return a string containing the text read from the URL. can be the result of a servlet, a web
    *         page or the contents of a local file. It's null if i couldn't read the file.
    */
-  public static InputStream xpoststreamUrl2(String url, AttrAccess httpArgs, String content) {
+  public static InputStream xpoststreamUrl2(String verb, String url, AttrAccess httpArgs, String content) {
       InputStream in = null;
-      URLConnection uc = xpoststreamUrl2A(url, httpArgs, content);
+      URLConnection uc = xpoststreamUrl2A(verb, url, httpArgs, content);
     try {
       in = uc.getInputStream();
       return in;
