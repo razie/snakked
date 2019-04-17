@@ -20,7 +20,8 @@ import scala.collection.mutable.{HashMap, ListBuffer}
 object js {
 
   def quote(s: String): String = {
-    JSONObject.quote(s)
+    val res = JSONObject.quote(s)
+    res
   }
 
   /** turn a map of name,value into json */

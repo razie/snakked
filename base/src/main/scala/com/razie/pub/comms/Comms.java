@@ -37,8 +37,15 @@ public class Comms {
 
   public static Consumer<URLConnection> dfltHandler = (URLConnection uc) -> {
     String resCode = uc.getHeaderField(0);
-    if (resCode == null || !resCode.endsWith("200 OK") && !resCode.endsWith("204 No Content")) {
-      String msg = "Could not fetch data from url " + uc.getURL().toString() + ", resCode=" + resCode + ", content="+ readStream(((HttpURLConnection)uc).getErrorStream());
+    String code = null;
+
+    // find the actual code
+    if (resCode != null) {
+      code = resCode.split(" ")[1];
+    }
+
+    if (code == null || !code.equals("200") && !code.equals("204")) { // 204 is No Content
+      String msg = "Could not fetch data from url " + uc.getURL().toString() + ", resCode=" + resCode + ", code=" + code + ", content="+ readStream(((HttpURLConnection)uc).getErrorStream());
       logger.trace(3, msg);
       throw new CommRtException(msg, uc);
     }

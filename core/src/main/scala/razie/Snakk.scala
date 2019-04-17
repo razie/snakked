@@ -54,7 +54,13 @@ object Snakk {
     * @param attr http request properties
     * @param method  GET/POST/FORM
     */
-  def url(s: String, attr: Map[String,String] = Map.empty, method:String="GET") = new SnakkUrl(new java.net.URL(s), attr, method)
+  def url(s: String, attr: Map[String,String] = Map.empty, method:String="GET"):SnakkUrl = {
+    try {
+      new SnakkUrl(new java.net.URL(s), attr, method)
+    } catch {
+      case e : Exception => throw new IllegalArgumentException("ERROR URL: "+s).initCause(e)
+    }
+  }
 
   /** retrieve the content from URL, as String
     * @param postContent optionally some content for post

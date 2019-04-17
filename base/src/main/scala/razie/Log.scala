@@ -66,6 +66,15 @@ object Log extends razie.Logging {
     }
   }
 
+  def exceptionToString (t:Throwable) = {
+    import java.io.StringWriter;
+    import java.io.PrintWriter;
+
+    val sw = new StringWriter();
+    val pw = new PrintWriter(sw);
+    t.printStackTrace(pw);
+    sw.toString(); // stack trace as a string
+  }
 }
 
 object Debug {
