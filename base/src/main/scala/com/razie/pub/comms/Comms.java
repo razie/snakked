@@ -256,7 +256,7 @@ public class Comms {
       throw rte;
     } catch (Exception e1) {
       // server/node down
-      CommRtException rte = new CommRtException("Connection exception for url=" + url, (URLConnection)null);
+      CommRtException rte = new CommRtException("Connection exception for url=" + url + " : " + e1.getMessage(), (URLConnection)null);
       rte.initCause(e1);
       throw rte;
     }
