@@ -177,6 +177,40 @@ object js {
   def parse (a:String) : Map[String, Any] = {
     fromObject(new JSONObject(a))
   }
+
+  /** turn a map of name,value into json */
+  def toJava(x: Map[_, _]): java.util.HashMap[String, Any] = {
+    val o = new java.util.HashMap[String, Any]()
+    x foreach {t:(_,_) =>
+      t._2 match {
+        case m: Map[_, _] => o.put(t._1.toString, toJava(m))
+        case s: String => o.put(t._1.toString, s)
+        case i: Int => o.put(t._1.toString, i)
+        case f: Double => o.put(t._1.toString, f)
+        case f: Float => o.put(t._1.toString, f)
+        case l: List[_] => o.put(t._1.toString, toJava(l))
+        case h @ _ => o.put(t._1.toString, h.toString)
+      }
+    }
+    o
+  }
+
+  /** turn a list into json */
+  def toJava(x: List[_]): java.util.List[Any] = {
+    val o = new java.util.ArrayList[Any]
+    x.foreach { t:Any =>
+      t match {
+        case s: Map[_, _] => o.add(toJava(s))
+        case l: List[_] => o.add(toJava(l))
+        case s: String => o.add(s)
+        case i: Int => o.add(i)
+        case f: Float => o.add(f)
+        case f: Double => o.add(f)
+      }
+    }
+    o
+  }
+
 }
 
 
