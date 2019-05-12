@@ -78,6 +78,18 @@ object cdebug extends Logging {
   def |(x: Any) = this < x
   def ||(x: Any) = this << x
   def |||(x: Any) = this <<< x
+
+  def eol = {this}
+}
+/** c++ memories, anyone... i do like to use the cout << x instead of println(x) */
+object ctrace extends Logging {
+  def <(x: Any) = { trace("< " + x); this }
+  def <<(x: Any) = { trace("<<  " + x); this }
+  def <<<(x: Any) = { trace("<<<   " + x); this }
+
+  def |(x: Any) = this < x
+  def ||(x: Any) = this << x
+  def |||(x: Any) = this <<< x
   
   def eol = {this}
 }

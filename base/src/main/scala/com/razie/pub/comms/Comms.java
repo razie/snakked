@@ -45,7 +45,11 @@ public class Comms {
     }
 
     if (code == null || !code.equals("200") && !code.equals("204")) { // 204 is No Content
-      String msg = "Could not fetch data from url " + uc.getURL().toString() + ", resCode=" + resCode + ", code=" + code + ", content="+ readStream(((HttpURLConnection)uc).getErrorStream());
+      String msg =
+          "Could not fetch data from url " + uc.getURL().toString() +
+              ", resCode=" + resCode +
+              ", code=" + code +
+              ", content="+ readStream(((HttpURLConnection)uc).getErrorStream());
       logger.trace(3, msg);
       throw new CommRtException(msg, uc);
     }
