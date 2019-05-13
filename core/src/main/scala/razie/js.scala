@@ -166,6 +166,9 @@ object js {
     if(a.names != null) for (k <- 0 until a.names.length)
       r.put(a.names.get(k).toString, a.get(a.names.get(k).toString) match {
         case s: String => s
+        case i: Integer => i.toInt
+        case f: Number if f.intValue() == f.doubleValue() => f.intValue()
+        case f: Number => f.doubleValue()
         case s: JSONObject => fromObject(s)
         case s: JSONArray => fromArray(s)
         case s => s.toString
