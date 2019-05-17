@@ -35,6 +35,14 @@ public class Comms {
 
   public static boolean trustAllInitialized = false;
 
+  private static int getResponseCode(URLConnection uc) {
+    try {
+      return ((HttpURLConnection) uc).getResponseCode();
+    } catch (IOException e) {
+      return -1;
+    }
+  }
+
   public static Consumer<URLConnection> dfltHandler = (URLConnection uc) -> {
     String resCode = uc.getHeaderField(0);
     String code = null;
@@ -46,12 +54,12 @@ public class Comms {
 
     if (code == null || !code.equals("200") && !code.equals("204")) { // 204 is No Content
       String msg =
-          "Could not fetch data from url " + uc.getURL().toString() +
+          "["+resCode+"] Could not fetch data from url " + uc.getURL().toString() +
               ", resCode=" + resCode +
-              ", code=" + code +
-              ", content="+ readStream(((HttpURLConnection)uc).getErrorStream());
-      logger.trace(3, msg);
-      throw new CommRtException(msg, uc);
+              ", code=" + code;
+      String content = "content="+ readStream(((HttpURLConnection)uc).getErrorStream());
+      logger.trace(3, msg + content);
+      throw new CommRtException(msg, uc, getResponseCode(uc)).withDetails( content );
     }
   };
 
@@ -128,13 +136,14 @@ public class Comms {
       iex.initCause(e);
       throw iex;
     } catch (CommRtException re) {
+      // may come from handling the exception - leave this
       throw re;
-    } catch (FileNotFoundException nef) { // 404 causes this - idiots !!!
-      CommRtException rte = new CommRtException("NotFound exception for url=" + url, uc);
+    } catch (FileNotFoundException nef) { // 404 causes this - nuts !!
+      CommRtException rte = new CommRtException("NotFound exception for url=" + url, uc, getResponseCode(uc));
       rte.initCause(nef);
       throw rte;
-    } catch (IOException io) { // 400 causes this - idiots !!! !!!
-      CommRtException rte = new CommRtException("IO exception for url=" + url, uc);
+    } catch (IOException io) { // 400 causes this - nuts !!
+      CommRtException rte = new CommRtException("IO exception for url=" + url, uc, getResponseCode(uc));
       rte.initCause(io);
       throw rte;
     } catch (Exception e1) {
@@ -195,12 +204,12 @@ public class Comms {
       throw iex;
     } catch (CommRtException re) {
       throw re;
-    } catch (FileNotFoundException nef) { // 404 causes this - idiots !!!
-      CommRtException rte = new CommRtException("NotFound exception for url=" + url, uc);
+    } catch (FileNotFoundException nef) { // 404 causes this - nuts !!!
+      CommRtException rte = new CommRtException("NotFound exception for url=" + url, uc, getResponseCode(uc));
       rte.initCause(nef);
       throw rte;
-    } catch (IOException io) { // 400 causes this - idiots !!! !!!
-      CommRtException rte = new CommRtException("IO exception for url=" + url, uc);
+    } catch (IOException io) { // 400 causes this - nuts !!
+      CommRtException rte = new CommRtException("IO exception for url=" + url, uc, getResponseCode(uc));
       rte.initCause(io);
       throw rte;
     } catch (Exception e1) {
@@ -250,12 +259,12 @@ public class Comms {
       throw iex;
     } catch (CommRtException re) {
       throw re;
-    } catch (FileNotFoundException nef) { // 404 causes this - idiots !!!
-      CommRtException rte = new CommRtException("NotFound exception for url=" + url, uc);
+    } catch (FileNotFoundException nef) { // 404 causes this - nuts !!!
+      CommRtException rte = new CommRtException("NotFound exception for url=" + url, uc, getResponseCode(uc));
       rte.initCause(nef);
       throw rte;
-    } catch (IOException io) { // 400 causes this - idiots !!! !!!
-      CommRtException rte = new CommRtException("IO exception for url=" + url, uc);
+    } catch (IOException io) { // 400 causes this - nuts !!
+      CommRtException rte = new CommRtException("IO exception for url=" + url, uc, getResponseCode(uc));
       rte.initCause(io);
       throw rte;
     } catch (Exception e1) {

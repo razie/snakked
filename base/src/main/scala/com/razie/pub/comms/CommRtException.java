@@ -14,10 +14,23 @@ import java.net.URLConnection;
 @SuppressWarnings("serial")
 public class CommRtException extends RuntimeException {
     public URLConnection uc = null;
+    public int httpCode = -1;
+    public String details = "";
 
     public CommRtException(String message, URLConnection uc) {
         super(message);
         this.uc = uc;
+    }
+
+    public CommRtException(String message, URLConnection uc, int code) {
+        super(message);
+        this.uc = uc;
+        this.httpCode = code;
+    }
+
+    public CommRtException withDetails(String s) {
+        this.details = s;
+        return this;
     }
 
     public CommRtException(String message, Throwable cause) {
