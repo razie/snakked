@@ -1,12 +1,12 @@
 
-scalaVersion := "2.11.8"
+scalaVersion := "2.11.12"
 
 name := "snakked"
 
 lazy val commonSettings = Seq(
   organization := "com.razie",
   version := "0.9.3-SNAPSHOT",
-  scalaVersion := "2.11.8",
+  scalaVersion := "2.11.12",
 
   organizationName     := "DieselApps",
   organizationHomepage := Some(url("http://www.dieselapps.com")),
