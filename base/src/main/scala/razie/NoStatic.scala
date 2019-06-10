@@ -90,7 +90,7 @@ object NoStaticS {
    * @return the same object you put in
    */
   def remove[A](implicit m: scala.reflect.Manifest[A]) {
-    NoStatics.remove(m.erasure)
+    NoStatics.remove(m.runtimeClass)
   }
   
   /**
@@ -101,13 +101,13 @@ object NoStaticS {
    * @return the same object you put in
    */
   def put[A](o: A)(implicit m: scala.reflect.Manifest[A]): A =
-    NoStatics.put(m.erasure, o).asInstanceOf[A]
+    NoStatics.put(m.runtimeClass, o).asInstanceOf[A]
 
   /**
    * get the instance/static for this thread of the given class on this thread
    */
   def get[A](implicit m: scala.reflect.Manifest[A]): Option[A] = {
-    val cl = NoStatics.get(m.erasure)
+    val cl = NoStatics.get(m.runtimeClass)
     if (cl != null) Some(cl.asInstanceOf[A]) else None
   }
 

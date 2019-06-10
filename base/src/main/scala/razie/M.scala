@@ -20,7 +20,7 @@ import scala.collection.mutable.ListBuffer
 trait M[+A] {
    def map[B]     (f: A => B)       : M[B] 
    def flatMap[B] (f: A => M[B])    : M[B] 
-   def filter     (p: A => Boolean) : M[A] 
+   def withFilter (p: A => Boolean) : M[A]
    def foreach[U] (f: A => U)
 
    def iterator: Iterator[A] 
@@ -40,7 +40,7 @@ trait M[+A] {
    class MonaDisordera[A] (val l:M[A]) extends M[A] {
      override def map[B](f: A => B): M[B] = new MonaDisordera(l.map(f))
      override def flatMap[B](f: A => M[B]): M[B] = new MonaDisordera (l.flatMap(x => f(x)))
-     override def filter(p: A => Boolean): M[A] = new MonaDisordera(l.filter(p))
+     override def withFilter(p: A => Boolean): M[A] = new MonaDisordera(l.withFilter(p))
      override def foreach[U](f: A => U) = l.foreach(f)
 
      override def iterator: Iterator[A]  = l.iterator
@@ -74,7 +74,7 @@ object M {
    class MonaItera[A] (val l:Iterator[A]) extends M[A] {
      override def map[B](f: A => B): M[B] = new MonaItera(l.map(f))
      override def flatMap[B](f: A => M[B]): M[B] = new MonaItera (l.flatMap(x => f(x).iterator))
-     override def filter(p: A => Boolean): M[A] = new MonaItera(l.filter(p))
+     override def withFilter(p: A => Boolean): M[A] = new MonaItera(l.filter(p))
      override def foreach[U](f: A => U) = l.foreach(f)
 
      override def iterator: Iterator[A]  = l
@@ -88,7 +88,7 @@ object M {
    class MonaTravestita[A] (val l:Traversable[A]) extends M[A] {
      override def map[B](f: A => B): M[B] = new MonaTravestita(l.map(f))
      override def flatMap[B](f: A => M[B]): M[B] = new MonaTravestita (l.flatMap(x => f(x).toList))
-     override def filter(p: A => Boolean): M[A] = new MonaTravestita(l.filter(p))
+     override def withFilter(p: A => Boolean): M[A] = new MonaTravestita(l.filter(p))
      override def foreach[U](f: A => U) = l.foreach(f)
 
      override def iterator: Iterator[A]  = l.toIterable.iterator
@@ -99,7 +99,7 @@ object M {
    class MonaOpta[A] (val l:Option[A]) extends M[A] {
      override def map[B](f: A => B): M[B] = new MonaOpta(l.map(f))
      override def flatMap[B](f: A => M[B]): M[B] = new MonaOpta (l.flatMap((x:A) => toOption (f(x))))
-     override def filter(p: A => Boolean): M[A] = new MonaOpta(l.filter(p))
+     override def withFilter(p: A => Boolean): M[A] = new MonaOpta(l.filter(p))
      override def foreach[U](f: A => U) = l.foreach(f)
 
      override def iterator: Iterator[A]  = l.iterator
@@ -194,7 +194,7 @@ object M {
       class State[A] {var s:Option[A] = None}
       val state = new State[A]()
       val f = (s:State[A], y:A) => {if (s.s.isDefined) false else {s.s=Some(y); true} }
-      val m = x.filter (f (state, _))
+      val m = x.withFilter (f (state, _))
       m
    }
 
@@ -203,7 +203,7 @@ object M {
       class State[A] {var s:Option[A] = None}
       val state = new State[A]()
       val f = (s:State[A], y:A) => {if (s.s.isDefined) false else {s.s=Some(y); true} }
-      val m = x.filter (f (state, _))
+      val m = x.withFilter (f (state, _))
       state.s
    }
 
@@ -212,7 +212,7 @@ object M {
       class State[A] {var s:Option[A] = None}
       val state = new State[A]()
       val f = (s:State[A], y:A) => {if (s.s.isDefined) false else {if (cond(y)) {s.s=Some(y); true} else false} }
-      val m = x.filter (f (state, _))
+      val m = x.withFilter (f (state, _))
       state.s
    }
 
@@ -240,7 +240,7 @@ object M {
 //      class State[A] {var s:Option[A] = firstOpt(x)}
 //      val state = new State[A]()
 //      val f = (s:State[A], y:A) => {if (s.s.isDefined) false else {if (cond(y)) {s.s=Some(y); true} else false} }
-//      val m = x.filter (f (state, _))
+//      val m = x.withFilter (f (state, _))
 //      state.s
 //   }
 }

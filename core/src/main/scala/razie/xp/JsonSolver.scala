@@ -73,7 +73,8 @@ object JsonSolver extends XpSolver[JsonWrapper] {
   override def getAttr(o: T, attr: String): String = {
     val ret = o match {
       case o: JsonOWrapper => Option(o.j.opt(attr)).mkString
-      case o: JSONObject => Option(o.opt(attr)).mkString
+        // this gives a warning since T is a JsonWrapper
+//      case x: JSONObject => Option(x.opt(attr)).mkString
       case _ => null
     }
     ret.toString

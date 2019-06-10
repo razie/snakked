@@ -34,13 +34,13 @@ trait UrlTester { this: FlatSpec with Matchers =>
 
     /** should matcher - url access fails */
     def e400(implicit hostport: String) = {
-      evaluating { this.wget } should produce[CommRtException]
+      an [CommRtException] should be thrownBy { this.wget }
     }
 
     /** should case - url access fails */
     def s400(implicit hostport: String) = {
       (s+uniq) should "not be visible" in {
-        evaluating { this.wget } should produce[CommRtException]
+        an [CommRtException] should be thrownBy  { this.wget }
       }
     }
 
