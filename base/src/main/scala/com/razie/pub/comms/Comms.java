@@ -35,7 +35,7 @@ public class Comms {
 
   public static boolean trustAllInitialized = false;
 
-  private static int getResponseCode(URLConnection uc) {
+  public static int getResponseCode(URLConnection uc) {
     try {
       return ((HttpURLConnection) uc).getResponseCode();
     } catch (IOException e) {
