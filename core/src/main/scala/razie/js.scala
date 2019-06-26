@@ -44,6 +44,7 @@ object js {
         case i: Int => o.put(t._1.toString, i)
         case f: Double => o.put(t._1.toString, f)
         case f: Float => o.put(t._1.toString, f)
+        case f: Boolean => o.put(t._1.toString, f)
         case l: List[_] => o.put(t._1.toString, tojson(l))
         case h @ _ => o.put(t._1.toString, h.toString)
       }
@@ -62,6 +63,7 @@ object js {
         case i: Int => o.put(i)
         case f: Float => o.put(f)
         case f: Double => o.put(f)
+        case f: Boolean => o.put(f)
         case s: JSONObject => o.put(s)
       }
     }
@@ -122,6 +124,7 @@ object js {
         case ix: Int => o += (" "*i) + q + k.toString + q+ ":"+ ix + comma
         case fx: Float => o += (" "*i) + q + k.toString + q+ ":"+ fx + comma
         case fx: Double => o += (" "*i) + q + k.toString + q+ ":"+ fx + comma
+        case fx: Boolean => o += (" "*i) + q + k.toString + q+ ":"+ fx + comma
         case l: List[_] => o += " "*i + q + k.toString + q + ":"+tojsons(l, i+1) + comma
         case h @ _ => o += " "*i + q + k.toString + q+ ":" + q(h.toString) + comma
       }
@@ -134,7 +137,15 @@ object js {
     * @param i is the level - start with 0
     */
   def tojsons(x: List[_], i:Int): String = {
-    var o = " "*(i-1) + "[" + (if(x.headOption.exists(!_.isInstanceOf[String]))"\n" else "")
+    var o = " "*(i-1) + "[" + (
+        if(
+          x.headOption.exists(!_.isInstanceOf[String]) &&
+          x.headOption.exists(!_.isInstanceOf[Int]) &&
+          x.headOption.exists(!_.isInstanceOf[Float]) &&
+          x.headOption.exists(!_.isInstanceOf[Double])
+        ) "\n"
+        else ""
+        )
     x.zipWithIndex.toSeq.sortBy(_._2) foreach { t =>
       def comma = if(t._2 < x.size-1) "," else ""
       t._1 match {
@@ -144,6 +155,7 @@ object js {
         case ix: Int => o += " "*i+ix +comma
         case fx: Float => o += " "*i+fx +comma
         case fx: Double => o += " "*i+fx +comma
+        case fx: Boolean => o += " "*i+fx +comma
         case s: JSONObject => o += " "*i+q(s.toString) +comma
         case s => o += " "*i+q(s.toString) +comma
       }
@@ -156,7 +168,18 @@ object js {
     (for (i <- 0 until a.length())
     yield a.get(i) match {
       case s: String => s
+      case i: Integer => i.toInt
+      case i: java.lang.Boolean => i
+      case f: Number if f.intValue() == f.doubleValue() => f.intValue()
+      case f: Number => f.doubleValue()
       case s: JSONObject => fromObject(s)
+      case s: JSONArray => fromArray(s)
+      case s: String => s.toString
+      case s => {
+        // use this to find out other missing types
+//        cout << "YYYYYYYYYYYYYYY "+s.getClass.getName
+        s.toString
+      }
     }).toList
   }
 
@@ -167,11 +190,17 @@ object js {
       r.put(a.names.get(k).toString, a.get(a.names.get(k).toString) match {
         case s: String => s
         case i: Integer => i.toInt
+        case i: java.lang.Boolean => i
         case f: Number if f.intValue() == f.doubleValue() => f.intValue()
         case f: Number => f.doubleValue()
         case s: JSONObject => fromObject(s)
         case s: JSONArray => fromArray(s)
-        case s => s.toString
+        case s: String => s.toString
+        case s => {
+          // use this to find out other missing types
+//          cout << "YYYYYYYYYYYYYYY "+s.getClass.getName
+          s.toString
+        }
       })
     r.toMap
   }
@@ -181,7 +210,7 @@ object js {
     fromObject(new JSONObject(a))
   }
 
-  /** turn a map of name,value into json */
+  /** from scala map to java map, recurssive, for JSON integration */
   def toJava(x: Map[_, _]): java.util.HashMap[String, Any] = {
     val o = new java.util.HashMap[String, Any]()
     x foreach {t:(_,_) =>
@@ -191,6 +220,7 @@ object js {
         case i: Int => o.put(t._1.toString, i)
         case f: Double => o.put(t._1.toString, f)
         case f: Float => o.put(t._1.toString, f)
+        case f: Boolean => o.put(t._1.toString, f)
         case l: List[_] => o.put(t._1.toString, toJava(l))
         case h @ _ => o.put(t._1.toString, h.toString)
       }
@@ -198,7 +228,7 @@ object js {
     o
   }
 
-  /** turn a list into json */
+  /** from scala list to java list, recurssive, for JSON integration */
   def toJava(x: List[_]): java.util.List[Any] = {
     val o = new java.util.ArrayList[Any]
     x.foreach { t:Any =>
@@ -209,6 +239,7 @@ object js {
         case i: Int => o.add(i)
         case f: Float => o.add(f)
         case f: Double => o.add(f)
+        case f: Boolean => o.add(f)
       }
     }
     o
