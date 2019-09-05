@@ -136,11 +136,11 @@ object Snakk {
   /** snakk a parsed JSON document */
   def json(node: JSONObject) = new Wrapper[JsonWrapper](JsonSolver.WrapO(node), JsonSolver)
   /** snakk a JSON document contained in the String */
-  def json(node: String) = new Wrapper[JsonWrapper](JsonSolver.WrapO(new JSONObject(node)), JsonSolver)
+  def json(node: String) = new Wrapper[JsonWrapper](JsonSolver.wrapOorA(node), JsonSolver)
   /** snakk a JSON document coming from an URL */
-  def json(url: SnakkUrl) = new Wrapper[JsonWrapper](JsonSolver.WrapO(new JSONObject(body(url))), JsonSolver)
+  def json(url: SnakkUrl):Wrapper[JsonWrapper] = json(body(url))
   /** helper - simply parse a json string */
-  def jsonParsed(node: String) = new JSONObject(node)
+  def jsonParsed(node: String) = new JSONObject(node) // todo can be array too
 
   /** this will go to the URL and try to figure out what the url is */
   def apply(node: String) = new Wrapper(node, StringXpSolver)

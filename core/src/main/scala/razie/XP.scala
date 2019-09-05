@@ -83,14 +83,14 @@ case class XP[T](val gp: GPath) {
     else
       ctx.unwrap(
         if (gp.nonaelements.size == 1) {
-          val c = ctx.children(root) // TODO this approach means we always introspec all to find one...
+          val c = ctx.children(root, None) // TODO this approach means we always introspec all to find one...
           val ret = ctx.reduce(List(c), gp.head).toList.map(_._1)
           // if unlucky, try children
           if (ret.size > 0) ret
           else solve(gp.head, ctx, List(c)).toList.asInstanceOf[List[(T, ctx.U)]].map(_._1)
         } else for (
           e <- (if (gp.head.name == "**") gp.nonaelements else gp.exceptFirst).foldLeft(
-            ctx.reduce(List(ctx.children(root)), gp.head).toList)((x, xe) => solve(xe, ctx, x).asInstanceOf[List[(T, ctx.U)]])
+            ctx.reduce(List(ctx.children(root, None)), gp.head).toList)((x, xe) => solve(xe, ctx, x).asInstanceOf[List[(T, ctx.U)]])
         ) yield e._1)
 
   /** from res get the path and then reduce with condition looking for elements */
@@ -98,7 +98,7 @@ case class XP[T](val gp: GPath) {
     if ("**" == xe.name)
       ctx.reduce(recurseSS(xe, gp.afterSS, ctx, res.asInstanceOf[List[(T, ctx.U)]]).asInstanceOf[List[(T, ctx.U)]], xe).toList
     else
-      for (e <- res.asInstanceOf[List[(T, ctx.U)]]; x <- ctx.reduce(ctx.getNext(e, xe.name, xe.assoc), xe)) yield x
+      for (e <- res.asInstanceOf[List[(T, ctx.U)]]; x <- ctx.reduce(ctx.getNext(e, xe.name, xe.assoc, Some(xe)), xe)) yield x
   }
 
   type LCC = List[Any] // sorry, can't workaround this - is typecasted everywhere
@@ -108,8 +108,8 @@ case class XP[T](val gp: GPath) {
     val m = for (
       e <- res.asInstanceOf[List[(T, ctx.U)]];
       x <- {
-        if (!ctx.getNext(e, next.name, next.assoc).isEmpty) e :: Nil
-        else recurseSS(xe, next, ctx, ctx.getNext(e, "*", "").toList)
+        if (!ctx.getNext(e, next.name, next.assoc, Some(next)).isEmpty) e :: Nil
+        else recurseSS(xe, next, ctx, ctx.getNext(e, "*", "", null).toList)
       }
     ) yield x
     m
@@ -243,9 +243,10 @@ trait XpSolver[T] {
    * You can return an actual list of nodes or a callback that you then call from getNext to get the actuals
    *
    * @param root the node we'll start resolving from
+   * @param xe - optional the current path element - you can use cond to filter result set directly when querying
    * @return
    */
-  def children(root: T): (T, U)
+  def children(root: T, xe: Option[XpElement]): (T, U)
 
   /**
    * get the next list of nodes at the current position in the path.
@@ -254,9 +255,10 @@ trait XpSolver[T] {
    * You can return an actual list of nodes or a callback that you then call from getNext to get the actuals
    *
    * @param curr the list of (currelement, continuation) to analyze
+   * @param xe - optional the current path element - you can use cond to filter result set directly when querying
    * @return
    */
-  def getNext(curr: (T, U), tag: String, assoc: String): Iterable[(T, U)]
+  def getNext(curr: (T, U), tag: String, assoc: String, xe: Option[XpElement]): Iterable[(T, U)]
 
   /**
    * get the value of an attribute from the given node
@@ -271,6 +273,8 @@ trait XpSolver[T] {
    * Note that the condition may be null - this is still called to give you a chance to cleanup?
    *
    * This default implementation may be ok for most resolvers
+   *
+   * NOTE - if you choose to filter in getNext, then you don't have to filter here...
    *
    * @param curr the list of (currelement, continuation) to reduce
    * @param cond the condition to use for filtering - may be null if there's no condition at this point
@@ -293,7 +297,7 @@ trait XpSolver[T] {
 }
 
 /** an element in the path: "{assoc}@prefix:name[cond]" */
-protected class XpElement(val expr: String) {
+class XpElement(val expr: String) {
   // todo maybe not allow space, but wrap the name in something automatically if spaces present?
   val parser = """(\{.*\})*([@])*([\w]+\:)*([\$|\w\. -]+|\**)(\[.*\])*""".r
   val parser(assoc_, attr, prefix, name, scond) = expr
@@ -313,9 +317,9 @@ object StringXpSolver extends XpSolver[String] {
   type T = String
   type U = List[String]
 
-  override def children(root: T): (T, U) = getNext((root, List(root)), "*", "").head
+  override def children(root: T, xe:Option[XpElement]): (T, U) = getNext((root, List(root)), "*", "", None).head
 
-  override def getNext(o: (T, U), tag: String, assoc: String): Iterable[(T, U)] = {
+  override def getNext(o: (T, U), tag: String, assoc: String, xe:Option[XpElement]): Iterable[(T, U)] = {
     val pat = """/*(\w+)(/.*)*""".r
     val pat(result, next) = o._2.head
     println ("DDDDDDDDDDD "+result+" = "+next)
@@ -338,12 +342,12 @@ class DomXpSolver extends XpSolver[RazElement] {
   type T = RazElement
   type U = List[RazElement]
 
-  override def children(root: T): (T, U) =
+  override def children(root: T, xe:Option[XpElement]): (T, U) =
     (root, root.children.asInstanceOf[U])
 
-  override def getNext(o: (T, U), tag: String, assoc: String): Iterable[(T, U)] = {
+  override def getNext(o: (T, U), tag: String, assoc: String, xe:Option[XpElement]): Iterable[(T, U)] = {
     val n = o._2 filter (zz => XP.stareq(zz.name, tag))
-    for (e <- n) yield children(e)
+    for (e <- n) yield children(e, xe)
   }
 
   override def getAttr(o: T, attr: String): String = o.asInstanceOf[RazElement] a attr
@@ -358,11 +362,11 @@ object ScalaDomXpSolver extends XpSolver[scala.xml.Elem] {
   type U = List[scala.xml.Elem]
 
   /** TODO can't i optimize this? how do i inline it at least? */
-  override def children(root: T): (T, U) =
+  override def children(root: T, xe:Option[XpElement]): (T, U) =
     (root, root.child.collect { case x:scala.xml.Elem => x }.toList)
 
-  override def getNext(o: (T, U), tag: String, assoc: String): Iterable[(T, U)] =
-    o._2.filter(zz => XP.stareq(zz.label, tag)).map(x => children(x)).toList
+  override def getNext(o: (T, U), tag: String, assoc: String, xe:Option[XpElement]): Iterable[(T, U)] =
+    o._2.filter(zz => XP.stareq(zz.label, tag)).map(x => children(x, xe)).toList
 
   // return node values as well, if proper atribute not found...
   override def getAttr(o: T, attr: String): String = {

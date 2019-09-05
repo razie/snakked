@@ -99,12 +99,19 @@ public class Comms {
    */
   public static URLConnection xpoststreamUrl2A(String verb, String url, AttrAccess httpArgs, String content) {
     HttpURLConnection uc = null;
+
+    int tout = MAX_TIMEOUT;
+    for (String a : httpArgs.getPopulatedAttr()) {
+      if(a.equals("snakkHttpOptions.readTimeout"))
+        tout = Integer.parseInt(httpArgs.sa(a));
+    }
+
     try {
       initTrustAll();
       InputStream in = null;
       uc = (HttpURLConnection) (new URL(url)).openConnection();
       uc.setConnectTimeout(MAX_TIMEOUT);
-      uc.setReadTimeout(MAX_TIMEOUT);
+      uc.setReadTimeout(tout);
 
       if("PATCH".equals(verb)) {
         allowMethods("PATCH");
@@ -115,7 +122,8 @@ public class Comms {
       uc.setDoOutput(true);
 
       for (String a : httpArgs.getPopulatedAttr()) {
-        uc.setRequestProperty(a, httpArgs.sa(a));
+        if(!a.startsWith("snakkHttpOptions."))
+          uc.setRequestProperty(a, httpArgs.sa(a));
       }
 
       OutputStreamWriter wr = new OutputStreamWriter(uc.getOutputStream());
@@ -182,15 +190,25 @@ public class Comms {
    */
   public static URLConnection streamUrlA(String url, AttrAccess... httpArgs) {
     URLConnection uc = null;
+
+    int tout = MAX_TIMEOUT;
+    if(httpArgs.length > 0) {
+      for (String a : httpArgs[0].getPopulatedAttr()) {
+        if (a.equals("snakkHttpOptions.readTimeout"))
+          tout = Integer.parseInt(httpArgs[0].sa(a));
+      }
+    }
+
     try {
       initTrustAll();
       uc = (new URL(url)).openConnection();
       uc.setConnectTimeout(MAX_TIMEOUT);
-      uc.setReadTimeout(MAX_TIMEOUT);
+      uc.setReadTimeout(tout);
 
         if (httpArgs.length > 0 && httpArgs[0] != null) {
           for (String a : httpArgs[0].getPopulatedAttr())
-            uc.setRequestProperty(a, httpArgs[0].sa(a));
+            if(!a.startsWith("snakkHttpOptions."))
+              uc.setRequestProperty(a, httpArgs[0].sa(a));
         }
 
         uc.connect();
@@ -231,6 +249,14 @@ public class Comms {
   public static InputStream streamUrl(String url, AttrAccess... httpArgs) {
     URLConnection uc = null;
 
+    int tout = MAX_TIMEOUT;
+    if(httpArgs.length > 0) {
+      for (String a : httpArgs[0].getPopulatedAttr()) {
+        if (a.equals("snakkHttpOptions.readTimeout"))
+          tout = Integer.parseInt(httpArgs[0].sa(a));
+      }
+    }
+
     try {
       initTrustAll();
       InputStream in = null;
@@ -239,9 +265,11 @@ public class Comms {
       } else if (url.startsWith("http:") || url.startsWith("https:")) {
         uc = (new URL(url)).openConnection();
         uc.setConnectTimeout(MAX_TIMEOUT);
-        uc.setReadTimeout(MAX_TIMEOUT);
+        uc.setReadTimeout(tout);
+
         if (httpArgs.length > 0 && httpArgs[0] != null) {
           for (String a : httpArgs[0].getPopulatedAttr())
+            if(!a.startsWith("snakkHttpOptions."))
             uc.setRequestProperty(a, httpArgs[0].sa(a));
         }
         logger.trace(3, "hdr: ", uc.getHeaderFields());

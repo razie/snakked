@@ -48,7 +48,7 @@ class MyBeanSolver(val excludeMatches: List[String => Boolean] = Nil) extends Xp
   def WrapF(j: Any, f: Field, label: String) = new FieldWrapper(j, f, label)
   def WrapM(j: Any, m: Method, label: String) = new MethodWrapper(j, m, label)
 
-  override def children(root: T): (T, U) = {
+  override def children(root: T, xe:Option[XpElement]): (T, U) = {
     val r = root match {
       case r1: BeanWrapper => r1
       case _ => WrapO(root, "root")
@@ -56,7 +56,7 @@ class MyBeanSolver(val excludeMatches: List[String => Boolean] = Nil) extends Xp
     (r, ((a: String, b: String) => resolve(r.j.asInstanceOf[AnyRef], a, b)).asInstanceOf[U])
   }
 
-  override def getNext(o: (T, U), tag: String, assoc: String): List[(T, U)] = {
+  override def getNext(o: (T, U), tag: String, assoc: String, xe:Option[XpElement]): List[(T, U)] = {
     XP.debug("getNext " + tag)
     o._2.asInstanceOf[CONT].apply(tag, assoc).asInstanceOf[List[Any]].asInstanceOf[List[BeanWrapper]].
       filter(zz => XP.stareq(zz.asInstanceOf[BeanWrapper].label, tag)).teeIf(XP.debugging, "before").

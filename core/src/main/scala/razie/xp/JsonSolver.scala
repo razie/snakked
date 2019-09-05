@@ -31,12 +31,18 @@ object JsonSolver extends XpSolver[JsonWrapper] {
   type CONT=List[JsonWrapper]
   type U=CONT
   
-  def WrapO(j: JSONObject, label: String = "root") = new JsonOWrapper(j, label)
-  def WrapA(j: JSONArray, label: String = "root") = new JsonAWrapper(j, label)
+  def WrapO(j: JSONObject, label: String = "root") = JsonOWrapper(j, label)
+  def WrapA(j: JSONArray, label: String = "root") = JsonAWrapper(j, label)
+
+  def wrapOorA(body:String, label:String="root") :JsonWrapper  = {
+    if(body.trim.startsWith("{")) WrapO(new JSONObject(body), label)
+    else if(body.trim.startsWith("[")) WrapA (new JSONArray(body), label)
+    else throw new IllegalArgumentException("JSON must start with { or [ but it starts with: " + body.take(10))
+  }
 
   import razie.Debug._
   
-  override def children(root: T): (T, U) =
+  override def children(root: T, xe:Option[XpElement]): (T, U) =
     root match {
       case x: JsonOWrapper => (x, children2(x, "*").toList.tee("C").asInstanceOf[U])
       case _ => throw new IllegalArgumentException()
@@ -44,7 +50,7 @@ object JsonSolver extends XpSolver[JsonWrapper] {
     
   // TODO 2-2 need to simplify - this is just mean...
   /** browsing json is different since only the parent konws the name of the child... a JSON Object doesn't know its own name/label/tag */
-  override def getNext(o: (T, U), tag: String, assoc: String): List[(T, U)] =
+  override def getNext(o: (T, U), tag: String, assoc: String, xe:Option[XpElement]): List[(T, U)] =
     o._2.asInstanceOf[List[JsonWrapper]].filter(zz => XP.stareq(zz.asInstanceOf[JsonWrapper].label, tag)).tee("D").flatMap (_ match {
       case x: JsonOWrapper => (x, children2(x, "*").toList.asInstanceOf[U]) :: Nil
       case x: JsonAWrapper => wrapElements(x.j, x.label) map (t=>(t, children2(t, "*").toList.asInstanceOf[U]))
