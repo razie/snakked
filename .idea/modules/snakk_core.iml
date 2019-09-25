@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module external.linked.project.id="snakk_core" external.linked.project.path="$MODULE_DIR$/../../core" external.root.project.path="$MODULE_DIR$/../.." external.system.id="SBT" type="JAVA_MODULE" version="4">
+<module external.linked.project.id="snakk_core [file:/Users/raz/w/snakked/]" external.linked.project.path="$MODULE_DIR$/../../core" external.root.project.path="$MODULE_DIR$/../.." external.system.id="SBT" type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8">
     <output url="file://$MODULE_DIR$/../../core/target/scala-2.11/classes" />
     <output-test url="file://$MODULE_DIR$/../../core/target/scala-2.11/test-classes" />
@@ -14,16 +14,15 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="snakk_base" exported="" />
-    <orderEntry type="library" name="sbt: ch.qos.logback:logback-classic:1.0.13:jar" level="project" />
-    <orderEntry type="library" name="sbt: ch.qos.logback:logback-core:1.0.13:jar" level="project" />
-    <orderEntry type="library" name="sbt: commons-jxpath:commons-jxpath:1.3:jar" level="project" />
-    <orderEntry type="library" scope="TEST" name="sbt: junit:junit:4.5:jar" level="project" />
-    <orderEntry type="library" name="sbt: org.json:json:20160810:jar" level="project" />
-    <orderEntry type="library" name="sbt: org.scala-lang:scala-library:2.11.8:jar" level="project" />
-    <orderEntry type="library" name="sbt: org.scala-lang:scala-reflect:2.11.8:jar" level="project" />
-    <orderEntry type="library" name="sbt: org.scala-lang.modules:scala-xml_2.11:1.0.3:jar" level="project" />
-    <orderEntry type="library" name="sbt: org.scalatest:scalatest_2.11:2.1.3:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.scala-lang:scala-reflect:2.11.12:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.scala-lang:scala-library:2.11.12:jar" level="project" />
     <orderEntry type="library" name="sbt: org.slf4j:slf4j-api:1.7.5:jar" level="project" />
-    <orderEntry type="library" name="scala-sdk-2.11.8" level="application" />
+    <orderEntry type="library" name="sbt: org.scalatest:scalatest_2.11:2.1.3:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.scala-lang.modules:scala-xml_2.11:1.0.3:jar" level="project" />
+    <orderEntry type="library" name="sbt: org.json:json:20160810:jar" level="project" />
+    <orderEntry type="library" scope="TEST" name="sbt: junit:junit:4.5:jar" level="project" />
+    <orderEntry type="library" name="sbt: commons-jxpath:commons-jxpath:1.3:jar" level="project" />
+    <orderEntry type="library" name="sbt: ch.qos.logback:logback-core:1.0.13:jar" level="project" />
+    <orderEntry type="library" name="sbt: ch.qos.logback:logback-classic:1.0.13:jar" level="project" />
   </component>
 </module>
