@@ -29,6 +29,7 @@ import java.util.function.Consumer;
  */
 public class Comms {
   public final static long MAX_BUF_SIZE=8L * 1024L * 1024L; // 8m bytes per request... more than enough?
+  public final static int MAX_CONNECT_TIMEOUT=500; // fast conn timeout
   public final static int MAX_TIMEOUT=30000; // 15 sec timeout
 
   static Log logger = Log.factory.create(Comms.class);
@@ -100,17 +101,20 @@ public class Comms {
   public static URLConnection xpoststreamUrl2A(String verb, String url, AttrAccess httpArgs, String content) {
     HttpURLConnection uc = null;
 
+    int cout = MAX_CONNECT_TIMEOUT;
     int tout = MAX_TIMEOUT;
     for (String a : httpArgs.getPopulatedAttr()) {
       if(a.equals("snakkHttpOptions.readTimeout"))
         tout = Integer.parseInt(httpArgs.sa(a));
+      if (a.equals("snakkHttpOptions.connectTimeout"))
+        cout = Integer.parseInt(httpArgs.sa(a));
     }
 
     try {
       initTrustAll();
       InputStream in = null;
       uc = (HttpURLConnection) (new URL(url)).openConnection();
-      uc.setConnectTimeout(MAX_TIMEOUT);
+      uc.setConnectTimeout(cout);
       uc.setReadTimeout(tout);
 
       if("PATCH".equals(verb)) {
@@ -191,18 +195,21 @@ public class Comms {
   public static URLConnection streamUrlA(String url, AttrAccess... httpArgs) {
     URLConnection uc = null;
 
+    int cout = MAX_CONNECT_TIMEOUT;
     int tout = MAX_TIMEOUT;
     if(httpArgs.length > 0) {
       for (String a : httpArgs[0].getPopulatedAttr()) {
         if (a.equals("snakkHttpOptions.readTimeout"))
           tout = Integer.parseInt(httpArgs[0].sa(a));
+        if (a.equals("snakkHttpOptions.connectTimeout"))
+          cout = Integer.parseInt(httpArgs[0].sa(a));
       }
     }
 
     try {
       initTrustAll();
       uc = (new URL(url)).openConnection();
-      uc.setConnectTimeout(MAX_TIMEOUT);
+      uc.setConnectTimeout(cout);
       uc.setReadTimeout(tout);
 
         if (httpArgs.length > 0 && httpArgs[0] != null) {
@@ -249,11 +256,14 @@ public class Comms {
   public static InputStream streamUrl(String url, AttrAccess... httpArgs) {
     URLConnection uc = null;
 
+    int cout = MAX_CONNECT_TIMEOUT;
     int tout = MAX_TIMEOUT;
     if(httpArgs.length > 0) {
       for (String a : httpArgs[0].getPopulatedAttr()) {
         if (a.equals("snakkHttpOptions.readTimeout"))
           tout = Integer.parseInt(httpArgs[0].sa(a));
+        if (a.equals("snakkHttpOptions.connectTimeout"))
+          cout = Integer.parseInt(httpArgs[0].sa(a));
       }
     }
 
@@ -264,7 +274,7 @@ public class Comms {
         in = (new URL(url)).openStream();
       } else if (url.startsWith("http:") || url.startsWith("https:")) {
         uc = (new URL(url)).openConnection();
-        uc.setConnectTimeout(MAX_TIMEOUT);
+        uc.setConnectTimeout(cout);
         uc.setReadTimeout(tout);
 
         if (httpArgs.length > 0 && httpArgs[0] != null) {
