@@ -10,6 +10,8 @@ import scala.collection.mutable
  * a simple triple index: each A has a set of (B,C)*, so that a pair (A,B) identifies a unique C.
  * This is often useful in applications to index data/configuration
  *
+ * NOTE this is not mt-safe
+ *
  * @author razie
  */
 class TripleIdx[A, B, C] {
