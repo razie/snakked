@@ -16,6 +16,7 @@ public class CommRtException extends RuntimeException {
     public URLConnection uc = null;
     public int httpCode = -1;
     public String details = "";
+    public String location302 = "";
 
     public CommRtException(String message, URLConnection uc) {
         super(message);
@@ -30,6 +31,11 @@ public class CommRtException extends RuntimeException {
 
     public CommRtException withDetails(String s) {
         this.details = s;
+        return this;
+    }
+
+    public CommRtException withLocation302(String s) {
+        this.location302 = s;
         return this;
     }
 

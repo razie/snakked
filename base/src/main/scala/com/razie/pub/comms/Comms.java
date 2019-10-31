@@ -53,6 +53,16 @@ public class Comms {
       code = resCode.split(" ")[1];
     }
 
+    if (code != null && code.trim().equals("302")) { // 204 is No Content
+      String loc = uc.getHeaderField("Location");
+      String msg =
+          "["+resCode+"] Redirect 302 from url " + uc.getURL().toString() +
+              ", to=" + loc;
+      logger.trace(3, msg + loc);
+      throw new CommRtException(msg, uc, getResponseCode(uc))
+          .withDetails(loc)
+          .withLocation302(loc);
+    } else
     if (code == null || !code.equals("200") && !code.equals("204")) { // 204 is No Content
       String msg =
           "["+resCode+"] Could not fetch data from url " + uc.getURL().toString() +
