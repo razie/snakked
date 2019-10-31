@@ -92,7 +92,7 @@ object DrawAsset_ {
 
       horiz.write(new ABDrawable (movie, DetailLevel.FULL))
 
-       for (a <- razie.M apply AssetMgr.pres().makeAllButtons(movie, false))
+       for (a <- AssetMgr.pres().makeAllButtons(movie, false).asScala)
           actions.write(a)
 
       // add more links...

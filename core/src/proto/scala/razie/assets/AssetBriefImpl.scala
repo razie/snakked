@@ -201,7 +201,7 @@ class ABRender (val detailLevel:DetailLevel) extends Renderer[AnyRef] {
             // IF full details, then print all buttons inside:
             if (detailLevel.equals(DetailLevel.FULL)) {
                 val l = new DrawList();
-                for (a <- razie.M apply AssetMgr.pres().makeAllButtons(b, false))
+                for (a <- AssetMgr.pres().makeAllButtons(b, false).asScala)
                     l.write(a);
 
                 s += l.render(Technology.HTML, null);

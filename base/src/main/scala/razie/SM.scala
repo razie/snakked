@@ -124,10 +124,8 @@ object SM extends razie.Logging {
       case None => { val x = new StrState(s); mstates.put(s, x); x }
     }
 
-    import razie.M._
-
     def move(e: Event): StateMachine = {
-      val o = razie.M.firstThat(transitions)((t: Transition) => { t.applies(currState, e) != None })
+      val o = transitions.find((t: Transition) => { t.applies(currState, e).isDefined })
       val m = o.map(_.applies(currState, e).getOrElse(NullState))
       val newState: State = m.getOrElse(NullState)
 

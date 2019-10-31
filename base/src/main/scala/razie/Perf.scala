@@ -13,9 +13,7 @@ case class Near (l:List[Double], percent:Int = 20) {
       case _ => false
    }
    
-   import razie.M._
-   
-   def cmp (s:Seq[Double]) = razie.M.equals(l, s) (
+   def cmp (s:Seq[Double]) = razie.M.equals(l, s.toList) (
          (s1,l1)=>{
             (s1 > l1*(100-percent)/100 && s1 < l1*(100+percent)/100 ||
             l1 > s1*(100-percent)/100 && l1 < s1*(100+percent)/100) 

@@ -56,10 +56,12 @@ object JsonSolver extends XpSolver[JsonWrapper] {
       case x: JsonAWrapper => wrapElements(x.j, x.label) map (t=>(t, children2(t, "*").toList.asInstanceOf[U]))
     }).tee("E").toList
 
+  import collection.JavaConverters._
+
   private def children2(node: JsonWrapper, tag: String): Seq[JsonWrapper] = {
     val x = node match {
       case b: JsonOWrapper =>
-        razie.MOLD(b.j.keys) filter ("*" == tag || tag == _) map (_.toString) map (n => Tuple2(n, b.j.get(n))) flatMap (t => t match {
+        b.j.keys.asScala filter ("*" == tag || tag == _) map (_.toString) map (n => Tuple2(n, b.j.get(n))) flatMap (t => t match {
           case (name: String, o: JSONObject) => WrapO(o, name) :: Nil
           case (name: String, a: JSONArray) => wrapElements(a, name)
           case _ => Nil
@@ -67,7 +69,7 @@ object JsonSolver extends XpSolver[JsonWrapper] {
       case what @ _ => throw new IllegalArgumentException("Unsupported json type here: " + what)
     }
     //        println(tag, x)
-    x
+    x.toSeq
   }
 
   private def wrapElements(node: JSONArray, tag: String) =

@@ -6,6 +6,7 @@
 package razie
 
 import razie.base._
+import collection.JavaConverters._
 
 object args {
   def apply (s:Any*):AA = {
@@ -54,8 +55,8 @@ object AA {
       case _ => None 
    }
    
-   def foreach (a:AttrAccess, f : (String, AnyRef) => Unit) = 
-      (razie.M apply (a.getPopulatedAttr)).foreach (x => f(x, a a x))
+   def foreach (a:AttrAccess, f : (String, AnyRef) => Unit) =
+     a.getPopulatedAttr.asScala foreach (x => f(x, a a x))
 }
 
 /** 
