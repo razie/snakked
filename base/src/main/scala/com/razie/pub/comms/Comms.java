@@ -63,7 +63,8 @@ public class Comms {
           .withDetails(loc)
           .withLocation302(loc);
     } else
-    if (code == null || !code.equals("200") && !code.equals("204")) { // 204 is No Content
+      // todo code 2xx is ok
+    if (code == null || !code.equals("200") && !code.equals("204") && !code.equals("201")) { // 204 is No Content, 201 created
       String msg =
           "["+resCode+"] Could not fetch data from url " + uc.getURL().toString() +
               ", resCode=" + resCode +
@@ -130,6 +131,9 @@ public class Comms {
       if("PATCH".equals(verb)) {
         allowMethods("PATCH");
         uc.setRequestMethod("PATCH");
+      } else if("PUT".equals(verb)) {
+        allowMethods("PUT");
+        uc.setRequestMethod("PUT");
       }
 
       // see http://www.exampledepot.com/egs/java.net/Post.html

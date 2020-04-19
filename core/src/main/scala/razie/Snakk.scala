@@ -71,6 +71,9 @@ object Snakk {
     case "POST" | "PATCH" =>
       Comms.xpoststreamUrl2A(url.method, url.url.toString, AA map url.httpAttr, postContent.getOrElse(""))
 
+    case "PUT"  =>
+      Comms.xpoststreamUrl2A(url.method, url.url.toString, AA map url.httpAttr, postContent.getOrElse(""))
+
     case "FORM" => {
       val content = razie.AA.map(url.formData).addToUrl("")
       Comms.xpoststreamUrl2A(
