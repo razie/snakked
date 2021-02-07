@@ -9,16 +9,16 @@ import com.razie.pub.base.log.Log;
 import razie.base.AttrAccess;
 
 import javax.net.ssl.*;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.security.cert.X509Certificate;
-import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -62,16 +62,18 @@ public class Comms {
       throw new CommRtException(msg, uc, getResponseCode(uc))
           .withDetails(loc)
           .withLocation302(loc);
-    } else
-      // todo code 2xx is ok
-    if (code == null || !code.equals("200") && !code.equals("204") && !code.equals("201")) { // 204 is No Content, 201 created
-      String msg =
-          "["+resCode+"] Could not fetch data from url " + uc.getURL().toString() +
-              ", resCode=" + resCode +
-              ", code=" + code;
-      String content = "content="+ readStream(((HttpURLConnection)uc).getErrorStream());
-      logger.trace(3, msg + content);
-      throw new CommRtException(msg, uc, getResponseCode(uc)).withDetails( content );
+    } else {
+      boolean isok = code != null && code.trim().matches("2[0-9][0-9]"); // 2xx is ok
+
+      if (code == null || !isok) { // 204 is No Content, 201 created
+        String msg =
+            "[" + resCode + "] Could not fetch data from url " + uc.getURL().toString() +
+                ", resCode=" + resCode +
+                ", code=" + code;
+        String content = "content=" + readStream(((HttpURLConnection) uc).getErrorStream());
+        logger.trace(3, msg + content);
+        throw new CommRtException(msg, uc, getResponseCode(uc)).withDetails(content);
+      }
     }
   };
 
@@ -128,12 +130,18 @@ public class Comms {
       uc.setConnectTimeout(cout);
       uc.setReadTimeout(tout);
 
-      if("PATCH".equals(verb)) {
-        allowMethods("PATCH");
-        uc.setRequestMethod("PATCH");
-      } else if("PUT".equals(verb)) {
-        allowMethods("PUT");
-        uc.setRequestMethod("PUT");
+      if(
+          "PATCH".equals(verb) ||
+          "PUT".equals(verb) ||
+          "DELETE".equals(verb) ||
+
+              // let's allow these too, they're in the standard
+          "TRACE".equals(verb) ||
+          "HEAD".equals(verb) ||
+          "OPTIONS".equals(verb)
+      ) {
+        allowMethods(verb);
+        uc.setRequestMethod(verb);
       }
 
       // see http://www.exampledepot.com/egs/java.net/Post.html
@@ -149,8 +157,8 @@ public class Comms {
       if (content != null && content.length() > 0) {
         dataToWrite = content;
       }
-      logger.trace(3, "POSTING:"+dataToWrite);
-      System.out.println("POSTING: "+dataToWrite.length() + " bytes");
+      logger.trace(3, "POSTING:"+verb + " - " + dataToWrite);
+      logger.log("POSTING: "+verb + " - " + dataToWrite.length() + " bytes to " + url);
       wr.write(dataToWrite);
       wr.flush();
 
@@ -202,12 +210,13 @@ public class Comms {
    * Stream the response of a URL.
    *
    * @param url can be local or remote
+   * @param body null or payload to send - even GET can send body
    * @param httpArgs are sent as HTTP request properties
    * @return a string containing the text read from the URL. can be the result of a servlet, a web
    *         page or the contents of a local file. It's null if i couldn't read the file.
    */
-  public static URLConnection streamUrlA(String url, AttrAccess... httpArgs) {
-    URLConnection uc = null;
+  public static URLConnection streamUrlA(String url, String body, AttrAccess... httpArgs) {
+    HttpURLConnection uc = null;
 
     int cout = MAX_CONNECT_TIMEOUT;
     int tout = MAX_TIMEOUT;
@@ -222,7 +231,7 @@ public class Comms {
 
     try {
       initTrustAll();
-      uc = (new URL(url)).openConnection();
+      uc = (HttpURLConnection) (new URL(url)).openConnection();
       uc.setConnectTimeout(cout);
       uc.setReadTimeout(tout);
 
@@ -232,7 +241,23 @@ public class Comms {
               uc.setRequestProperty(a, httpArgs[0].sa(a));
         }
 
-        uc.connect();
+      if (body != null && body.length() > 0) {
+        uc.setDoOutput(true);
+        allowMethods("GET");
+        uc.setRequestMethod("GET");
+        OutputStreamWriter wr = new OutputStreamWriter(uc.getOutputStream());
+        String dataToWrite = "";
+        dataToWrite = body;
+        logger.trace(3, "POSTING:"+dataToWrite);
+        logger.log("POSTING: "+dataToWrite.length() + " bytes to " + url);
+
+        wr.write(dataToWrite);
+        wr.flush();
+        wr.close();
+        uc.getOutputStream().close();  //don't forget to close the OutputStream
+      }
+
+      uc.connect();
 
         logger.trace(3, "hdr: ", uc.getHeaderFields());
       dfltHandler.accept(uc);

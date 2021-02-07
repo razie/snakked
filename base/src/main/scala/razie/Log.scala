@@ -78,7 +78,7 @@ object Log extends razie.Logging {
 }
 
 object Debug {
-  def apply(f: => Any) = Log.debug(f.toString)
+  def apply(f: => Any) = Log.trace(f.toString)
   
   implicit def toTee[T](l: Seq[T]): TeeSeq[T] = new TeeSeq[T](l)
   class TeeSeq[T](l: Seq[T]) {
