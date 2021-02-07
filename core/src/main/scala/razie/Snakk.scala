@@ -66,12 +66,9 @@ object Snakk {
     * @param postContent optionally some content for post
     */
   def conn(url: SnakkUrl, postContent:Option[String]=None) = url.method match {
-    case "GET"  => Comms.streamUrlA(url.url.toString, AA map url.httpAttr)
+    case "GET"  => Comms.streamUrlA(url.url.toString, postContent.getOrElse(""), AA map url.httpAttr)
 
-    case "POST" | "PATCH" =>
-      Comms.xpoststreamUrl2A(url.method, url.url.toString, AA map url.httpAttr, postContent.getOrElse(""))
-
-    case "PUT"  =>
+    case "POST" | "PATCH" | "PUT" | "DELETE" =>
       Comms.xpoststreamUrl2A(url.method, url.url.toString, AA map url.httpAttr, postContent.getOrElse(""))
 
     case "FORM" => {
@@ -84,16 +81,19 @@ object Snakk {
           "Host" -> "localhost")),
         content)
     }
-    case x@_ => throw new IllegalArgumentException ("unknown URL method: "+x)
+    case x@_ => //throw new IllegalArgumentException ("unknown URL method: "+x)
+      // default to POST
+      Comms.xpoststreamUrl2A(url.method, url.url.toString, AA map url.httpAttr, postContent.getOrElse(""))
   }
 
   /** retrieve the content from URL, as String
     * @param postContent optionally some content for post
     */
   def body(url: SnakkUrl, postContent:Option[String]=None) = url.method match {
+      // todo send body for GET, see above
     case "GET" => Option(Comms.readUrl(url.url.toString, AA map url.httpAttr)).getOrElse("")
 
-    case "POST" | "PATCH" =>
+    case "POST" | "PATCH" | "PUT" | "DELETE" =>
       Option(Comms.readStream(Comms.xpoststreamUrl2(url.method, url.url.toString, AA map url.httpAttr, postContent.getOrElse("")))).getOrElse("")
 
     case "FORM" => {
@@ -106,7 +106,9 @@ object Snakk {
                        "Host" -> "localhost")), 
           content))).getOrElse("")
     }
-    case x@_ => throw new IllegalArgumentException ("unknown URL method: "+x)
+    case x@_ => //throw new IllegalArgumentException ("unknown URL method: "+x)
+      // default to POST
+      Option(Comms.readStream(Comms.xpoststreamUrl2(url.method, url.url.toString, AA map url.httpAttr, postContent.getOrElse("")))).getOrElse("")
   }
   
   /** retrieve the content from URL, as String and strip html wrappers, leave just body */
