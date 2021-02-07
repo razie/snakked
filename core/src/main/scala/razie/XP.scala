@@ -198,8 +198,17 @@ object XpCondFactory {
  */
 class XpCond(val expr: String) {
   // TODO 1-2 implement something better
-  val parser = """\[[@]*(\w+)[ \t]*([=!~]+)[ \t]*[']*([^']*)[']*\]""".r
-  val parser(a, eq, v) = expr
+  val (a, eq, v) = pa
+
+  private def pa = {
+    try {
+      val parser = """\[[@]*(\w+)[ \t]*([=!~]+)[ \t]*[']*([^']*)[']*\]""".r
+      val parser(a, eq, v) = expr
+      (a, eq, v)
+    } catch {
+      case s@_ => throw new RuntimeException("Not valid XPATH: " + expr, s)
+    }
+  }
 
   /** returns all required attributes, in the AA format */
   def attributes: Iterable[String] = List(a)
@@ -298,10 +307,19 @@ trait XpSolver[T] {
 
 /** an element in the path: "{assoc}@prefix:name[cond]" */
 class XpElement(val expr: String) {
-  // todo maybe not allow space, but wrap the name in something automatically if spaces present?
-  val parser = """(\{.*\})*([@])*([\w]+\:)*([\$|\w\. -]+|\**)(\[.*\])*""".r
-  val parser(assoc_, attr, prefix, name, scond) = expr
+    // todo maybe not allow space, but wrap the name in something automatically if spaces present?
+  val (assoc_, attr, prefix, name, scond) = pa
   val cond = XpCondFactory.make(scond)
+
+  def pa = {
+    try {
+      val parser = """(\{.*\})*([@])*([\w]+\:)*([\$|\w\. -]+|\**)(\[.*\])*""".r
+      val parser(assoc_, attr, prefix, name, scond) = expr
+      (assoc_, attr, prefix, name, scond)
+    } catch {
+      case s@_ => throw new RuntimeException("Not valid XPATH: " + expr, s)
+    }
+  }
 
   def assoc = assoc_ match {
     // i don't know patterns very well this is plain ugly... :(
