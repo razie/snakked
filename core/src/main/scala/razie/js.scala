@@ -9,7 +9,6 @@ package razie
 import java.lang
 import org.json.{JSONArray, JSONObject}
 import scala.collection.mutable.{HashMap, ListBuffer}
-import scala.collection.parallel.mutable
 
 /**
  * json helpers
@@ -117,9 +116,13 @@ object js {
   private def q(str:String) = quote(str)
 
   /** turn a map of name,value into json */
-  def tojsons(x: collection.Map[_, _], i:Int = 1): String = {
+  def tojsons(x: collection.Map[_, _], i:Int = 1, sorted:Boolean=false): String = {
     var o = " "*(i-1) + "{\n"
-    x.zipWithIndex.toSeq.sortBy(_._2) foreach {t =>
+    (
+//        if(sorted) (new SortedMap[String, _]).x.toSeq.sortBy(_._1.toString)
+//        else
+    x.zipWithIndex.toSeq.sortBy(_._2)
+    ) foreach {t =>
       val (k,v) = t._1
       def comma = if(t._2 < x.size-1) ",\n" else "\n"
       v match {
@@ -241,7 +244,7 @@ object js {
     o
   }
 
-  /** from scala list to java list, recurssive, for JSON integration */
+  /** from scala list to java list, recursive, for JSON integration */
   def toJava(x: collection.Seq[_]): java.util.List[Any] = {
     val o = new java.util.ArrayList[Any]
     x.foreach { t:Any =>
