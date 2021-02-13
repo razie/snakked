@@ -157,7 +157,7 @@ public class Comms {
       if (content != null && content.length() > 0) {
         dataToWrite = content;
       }
-      logger.trace(3, "POSTING:"+verb + " - " + dataToWrite);
+      logger.trace(3, "POSTING: "+verb + " - " + dataToWrite);
       logger.log("POSTING: "+verb + " - " + dataToWrite.length() + " bytes to " + url);
       wr.write(dataToWrite);
       wr.flush();

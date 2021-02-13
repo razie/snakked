@@ -68,7 +68,7 @@ object Snakk {
   def conn(url: SnakkUrl, postContent:Option[String]=None) = url.method match {
     case "GET"  => Comms.streamUrlA(url.url.toString, postContent.getOrElse(""), AA map url.httpAttr)
 
-    case "POST" | "PATCH" | "PUT" | "DELETE" =>
+    case "POST" | "PATCH" | "PUT" | "DELETE" | "TRACE" | "HEAD" | "OPTIONS" =>
       Comms.xpoststreamUrl2A(url.method, url.url.toString, AA map url.httpAttr, postContent.getOrElse(""))
 
     case "FORM" => {
@@ -93,7 +93,7 @@ object Snakk {
       // todo send body for GET, see above
     case "GET" => Option(Comms.readUrl(url.url.toString, AA map url.httpAttr)).getOrElse("")
 
-    case "POST" | "PATCH" | "PUT" | "DELETE" =>
+    case "POST" | "PATCH" | "PUT" | "DELETE" | "TRACE" | "HEAD" | "OPTIONS" =>
       Option(Comms.readStream(Comms.xpoststreamUrl2(url.method, url.url.toString, AA map url.httpAttr, postContent.getOrElse("")))).getOrElse("")
 
     case "FORM" => {
