@@ -10,8 +10,14 @@ import java.lang
 import org.json.{JSONArray, JSONObject}
 import scala.collection.mutable.{HashMap, ListBuffer}
 
+/** implement by anything with an internal json structure */
+trait HasJsonStructure {
+  def hasJsonStructure:Boolean
+  def getJsonStructure:collection.Map[String,Any]
+}
+
 /**
- * json helpers
+  * json helpers
  *
  *  a json is represented as maps of (name,value) and lists of values, either of which can be recursive, representing
  *  a json object via a map and an array as a list.
@@ -48,6 +54,7 @@ object js {
         case f: Float => o.put(t._1.toString, f)
         case f: Boolean => o.put(t._1.toString, f)
         case l: collection.Seq[_] => o.put(t._1.toString, tojson(l))
+        case j: HasJsonStructure if j.hasJsonStructure => o.put(t._1.toString, tojson(j.getJsonStructure))
         case h @ _ => o.put(t._1.toString, h.toString)
       }
     }
@@ -67,6 +74,7 @@ object js {
         case f: Float => o.put(f)
         case f: Double => o.put(f)
         case f: Boolean => o.put(f)
+        case j: HasJsonStructure if j.hasJsonStructure => o.put(tojson(j.getJsonStructure))
         case s: JSONObject => o.put(s)
       }
     }
@@ -134,6 +142,10 @@ object js {
         case fx: Double => o += (" "*i) + q + k.toString + q+ ":"+ fx + comma
         case fx: Boolean => o += (" "*i) + q + k.toString + q+ ":"+ fx + comma
         case l: collection.Seq[_] => o += " "*i + q + k.toString + q + ":"+tojsons(l, i+1) + comma
+        case j: HasJsonStructure if j.hasJsonStructure => {
+          val m = j.getJsonStructure
+          o += (" "*i) + q + k.toString  + q+ ":"+tojsons(m, i+1) + comma
+        }
         case h @ _ => o += " "*i + q + k.toString + q+ ":" + q(h.toString) + comma
       }
     }
@@ -166,6 +178,10 @@ object js {
         case fx: Double => o += " "*i+fx +comma
         case fx: Boolean => o += " "*i+fx +comma
         case s: JSONObject => o += " "*i+q(s.toString) +comma
+        case j: HasJsonStructure if j.hasJsonStructure => {
+          val m = j.getJsonStructure
+          o += tojsons(m, i+1) +comma+"\n"
+        }
         case s => o += " "*i+q(s.toString) +comma
       }
     }
