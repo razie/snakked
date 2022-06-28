@@ -38,7 +38,7 @@ class SnakkUrl(
   def form(fields:Map[String,String]) =
     new SnakkUrl(url, httpAttr, "FORM", formData ++ fields)
   
-  override def toString : String = s"SnakkUrl: $method ${url.toString} ++ ${httpAttr.mkString} ++ ${formData.mkString}"
+  override def toString : String = s"$method ${url.toString} ++ ${httpAttr.mkString} ++ ${formData.mkString}"
 }
 
 /**
@@ -275,30 +275,36 @@ object Snakk {
 
   def requestFromJson (body:String) = {
     val m = razie.js.parse(body)
-    val h = m("headers").asInstanceOf[Map[String, String]]
+    val h = m("headers").asInstanceOf[mutable.HashMap[String, String]]
     SnakkRequest (
       m("protocol").toString,
       m("method").toString,
       m("url").toString,
-      h,
+      h.toMap,
       m("content").toString,
       m("id").toString
     )
   }
 
-  // magic
+  // magic separator to bundle body and request in a POST body
   val SSS = "SNAKKSNAKKSNAKK"
 
   def responseFromJson (body:String) = {
     val x = body.split (SSS, 2)
     val m = razie.js.parse(x(0))
-    val h = m("headers").asInstanceOf[Map[String, String]]
-    val ctype = h("Content-Type").toString
+    val h = m("headers").asInstanceOf[mutable.HashMap[String, String]]
+    val ctype = h.get("Content-Type").orElse(h.get("content-type")).getOrElse("")
     val dec =
       if(x(1).startsWith("SNAKK64")) Base64.decode(x(1).substring(7))
       else x(1).getBytes()
 
-    SnakkResponse(m("responseCode").toString, h, new String(dec, 0, dec.size), ctype, m("id").toString)
+    SnakkResponse(
+      m("responseCode").toString,
+      m.get("resCode").getOrElse("200").toString.toInt,
+      h.toMap.asInstanceOf[Map[String,String]],
+      new String(dec, 0, dec.size),
+      ctype,
+      m("id").toString)
   }
 
   def isText (ctype:String) =
@@ -316,18 +322,24 @@ case class SnakkRequest (protocol: String, method: String, url: String, headers:
     m.put("content", content)
     m.toMap
   }
+
+  override def toString = razie.js.tojsons(toJson).replaceAllLiterally("\n", "")
 }
 
-case class SnakkResponse (responseCode:String, headers: Map[String, String], content: String, ctype:String, id:String="") {
+case class SnakkResponse (responseCode:String, resCode:Int, headers: Map[String, String], content: String, ctype:String, id:String="") {
+
   /** it will not include the content */
   def toJson = {
     val m = new mutable.HashMap[String, Any]()
     m.put("id", id)
     m.put("responseCode", responseCode)
+    m.put("resCode", resCode.toString)
     m.put("headers", headers)
     m.put("content", "")
     m.put("ctype", ctype)
     m.toMap
   }
+
+  override def toString = razie.js.tojsons(toJson).replaceAllLiterally("\n", "")
 }
 

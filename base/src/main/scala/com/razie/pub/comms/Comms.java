@@ -22,6 +22,7 @@ import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -40,11 +41,13 @@ public class Comms {
     try {
       return ((HttpURLConnection) uc).getResponseCode();
     } catch (IOException e) {
+      // this is what the getRespCdode above returns by default anyways
       return -1;
     }
   }
 
-  public static Consumer<URLConnection> dfltHandler = (URLConnection uc) -> {
+  /** handle and throw for basic errors */
+  public static BiConsumer<URLConnection, Integer> dfltHandler = (URLConnection uc, Integer tout) -> {
     String resCode = uc.getHeaderField(0);
     String code = null;
 
@@ -66,12 +69,21 @@ public class Comms {
       boolean isok = code != null && code.trim().matches("2[0-9][0-9]"); // 2xx is ok
 
       if (code == null || !isok) { // 204 is No Content, 201 created
+        int respCode = getResponseCode(uc);
+        String content = readStream(((HttpURLConnection) uc).getErrorStream());
+        final int TAKE = 25;
+        String ec = content != null && content.length() > TAKE ? content.substring(0,TAKE) : ""+content;
+
+        // if not max timeout, the caller specified a time out so if
+        String timedout = tout != MAX_TIMEOUT ? "(maybe timeout) " : " ";
+
         String msg =
-            "[" + resCode + "] Could not fetch data from url " + uc.getURL().toString() +
+            "[" + resCode + "] Could not fetch data from url " + timedout + uc.getURL().toString() +
                 ", resCode=" + resCode +
-                ", code=" + code;
-        String content = "content=" + readStream(((HttpURLConnection) uc).getErrorStream());
-        logger.trace(3, msg + content);
+                ", code=" + code +
+                ", responseCode=" + respCode+
+                ", errStream=" + ec;
+        logger.trace(3, msg + "error response=" + content);
         throw new CommRtException(msg, uc, getResponseCode(uc)).withDetails(content);
       }
     }
@@ -158,12 +170,12 @@ public class Comms {
         dataToWrite = content;
       }
       logger.trace(3, "POSTING: "+verb + " - " + dataToWrite);
-      logger.log("POSTING: "+verb + " - " + dataToWrite.length() + " bytes to " + url);
+      logger.log("POSTING: "+verb + " - " + dataToWrite.length() + " bytes to " + url + " cout="+cout + " tout=" + tout);
       wr.write(dataToWrite);
       wr.flush();
 
       logger.trace(3, "hdr: ", uc.getHeaderFields());
-      dfltHandler.accept(uc);
+      dfltHandler.accept(uc, tout);
       return uc;
     } catch (MalformedURLException e) {
       RuntimeException iex = new IllegalArgumentException();
@@ -248,8 +260,8 @@ public class Comms {
         OutputStreamWriter wr = new OutputStreamWriter(uc.getOutputStream());
         String dataToWrite = "";
         dataToWrite = body;
-        logger.trace(3, "POSTING:"+dataToWrite);
-        logger.log("POSTING: "+dataToWrite.length() + " bytes to " + url);
+        logger.trace(3, "POSTING: "+ dataToWrite);
+        logger.log("POSTING: "+dataToWrite.length() + " bytes to " + url + " cout="+cout + " tout=" + tout);
 
         wr.write(dataToWrite);
         wr.flush();
@@ -260,7 +272,7 @@ public class Comms {
       uc.connect();
 
         logger.trace(3, "hdr: ", uc.getHeaderFields());
-      dfltHandler.accept(uc);
+      dfltHandler.accept(uc, tout);
       return uc;
     } catch (MalformedURLException e) {
       RuntimeException iex = new IllegalArgumentException();
@@ -321,10 +333,13 @@ public class Comms {
             if(!a.startsWith("snakkHttpOptions."))
             uc.setRequestProperty(a, httpArgs[0].sa(a));
         }
+
         logger.trace(3, "hdr: ", uc.getHeaderFields());
+        logger.log("GET: from " + url + " cout="+cout + " tout=" + tout);
+
         in = uc.getInputStream();
 
-        dfltHandler.accept(uc);
+        dfltHandler.accept(uc, tout);
       } else {
         File file = new File(url);
         in = file.toURL().openStream();

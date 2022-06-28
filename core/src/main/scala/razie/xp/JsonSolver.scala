@@ -45,7 +45,7 @@ object JsonSolver extends XpSolver[JsonWrapper] {
   override def children(root: T, xe:Option[XpElement]): (T, U) =
     root match {
       case x: JsonOWrapper => (x, children2(x, "*").toList.tee("C").asInstanceOf[U])
-      case _ => throw new IllegalArgumentException()
+      case y@_ => throw new IllegalArgumentException("Not JsonOWrapper! It's a: " + y.getClass.getName)
     }
     
   // TODO 2-2 need to simplify - this is just mean...
@@ -83,7 +83,7 @@ object JsonSolver extends XpSolver[JsonWrapper] {
       case o: JsonOWrapper => Option(o.j.opt(attr)).mkString
         // this gives a warning since T is a JsonWrapper
 //      case x: JSONObject => Option(x.opt(attr)).mkString
-      case _ => null
+      case y@_ => throw new IllegalArgumentException("Not JsonOWrapper! It's a: " + y.getClass.getName)
     }
     ret.toString
   }

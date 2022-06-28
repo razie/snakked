@@ -6,13 +6,13 @@
   **/
 package razie.snakked
 
-import java.net.URL
-
+import java.net.{InetAddress, URL}
 import com.razie.pub.comms.Comms
 import com.razie.pub.util.Base64
+import java.io.IOException
 import razie.{Snakk, SnakkRequest, SnakkResponse}
-
 import scala.collection.mutable
+import sun.net.www.URLConnection
 
 /** a snakking proxy
   *
@@ -22,8 +22,9 @@ import scala.collection.mutable
   * -D snakk.proxy.dests=http://host1.me.com:9000,http://host2.me.com:9000
   *
   */
-object SnakkProxy {
+object SnakkProxyRemote {
 
+  var name : String = InetAddress.getLocalHost().getHostAddress.replaceAllLiterally(".", "_")
   var dests : Array[String] = Array()
   var sources : Array[String] = Array()
 
@@ -32,8 +33,10 @@ object SnakkProxy {
   var DELAY : Int = 10000 // for short sleep
   var RESTART : Int = 120000 // for testing
 
+  /** main entry point */
   def main (args : Array[String]) = {
     // are arguments set?
+    name = System.getProperty("snakk.proxy.env", name)
     dests = System.getProperty("snakk.proxy.dests", "").split(",")
     sources = System.getProperty("snakk.proxy.sources", "").split(",")
     SLEEP1 = System.getProperty("snakk.proxy.sleep1", "1000").toInt
@@ -46,6 +49,7 @@ object SnakkProxy {
     for(
       arg <- args
     ) {
+      if(arg contains "snakk.proxy.env") name = arg.split("=").last;
       if(arg contains "snakk.proxy.dests") dests = arg.split("=").last.split(",")
       if(arg contains "snakk.proxy.sources") sources = arg.split("=").last.split(",")
       if(arg contains "snakk.proxy.sleep1") SLEEP1 = arg.split("=").last.toInt
@@ -54,8 +58,13 @@ object SnakkProxy {
       if(arg contains "snakk.proxy.restart") RESTART = arg.split("=").last.toInt
     }
 
-    log("dests: " + dests.mkString)
-    log("sources: " + sources.mkString)
+    mainLoop()
+  }
+
+  /** main loop of proxy. If it ends, restart it... */
+  def mainLoop () = {
+    log("dests: " + dests.mkString(","))
+    log("sources: " + sources.mkString(","))
 
     var sleep = SLEEP2
     var lastTime = System.currentTimeMillis() - DELAY - 1 // go straight to long sleep mode
@@ -90,8 +99,8 @@ object SnakkProxy {
 
   /** check one destination for one source and if any, do proxy and return true */
   def checkAndProxy (dest:String, source:String) : Boolean = {
-    log(s"Checking $source for any requests for $dest")
-    val resp = Snakk.body(Snakk.url("http://" + source + "/snakk/check/" + dest))
+    log(s"Checking $source for any requests for $name and $dest")
+    val resp = Snakk.body(Snakk.url(s"http://$source/snakk/check/$name/$dest"))
 
     if(resp.size > 1) {
       log(s"... got $resp")
@@ -114,11 +123,14 @@ object SnakkProxy {
 
   /** proxy one request */
   def doProxy (rq:SnakkRequest) : SnakkResponse = {
+    var uc:java.net.URLConnection = null
+
+    try {
       log(s"... snakking ${rq.url}")
       val u = rq.protocol + "://" + rq.url
 
       // make the call
-      val uc = new URL(u).openConnection
+      uc = new URL(u).openConnection
       for (a <- rq.headers) {
         uc.setRequestProperty(a._1, a._2)
       }
@@ -127,40 +139,67 @@ object SnakkProxy {
 
       val resCode = uc.getHeaderField(0)
 
-      val head = new mutable.HashMap[String,String]()
+      val head = new mutable.HashMap[String, String]()
 
-    // flatten headers into a map
+      // flatten headers into a map
       import scala.collection.JavaConversions._
-      for(x <- uc.getHeaderFields.entrySet().iterator())
-        if(x.getKey() != null)
+      for (x <- uc.getHeaderFields.entrySet().iterator())
+        if (x.getKey() != null)
           head.put(x.getKey, x.getValue.mkString)
 
       val in = uc.getInputStream
 
-      if (! resCode.endsWith("200 OK")) {
+      val rc = Comms.getResponseCode(uc)
+
+      if (!resCode.endsWith("200 OK")) {
         // todo - do something terrible
       }
 
-    // read bytes to use UTF-8 encoding rather than jvm default
-    val response = Comms.readStreamBytes (in)
+      // read bytes to use UTF-8 encoding rather than jvm default
+      val response = Comms.readStreamBytes(in)
 //      val response = Comms.readStream(in)
 
       log(s"... response ${response.getData.size} bytes")
 //      log(s"... response ${first100(response)}")
 
-      val ctype = head("Content-Type").toString
+      val ctype = head.get("Content-Type").orElse(head.get("content-type")).getOrElse("")
       val content =
-        if(false && Snakk.isText(ctype)) response.toString
+        if (false && Snakk.isText(ctype)) response.toString
         else "SNAKK64" + Base64.encodeBytes(response.getData())
 
-      val r = SnakkResponse(resCode, head.toMap, content, head("Content-Type").toString, rq.id)
+      val r = SnakkResponse(resCode, rc, head.toMap.asInstanceOf[Map[String,String]], content, ctype, rq.id)
 
+      log("... sending response: " + r)
       return r
+    } catch {
+      case io:IOException => {
+        log("IOException: " + io.toString)
+        log("...hdr: " + uc.getHeaderFields)
+
+        val resCode = uc.getHeaderField(0)
+        val rc = Comms.getResponseCode(uc)
+
+        val head = new mutable.HashMap[String, String]()
+        val ctype = head.get("Content-Type").orElse(head.get("content-type")).getOrElse("")
+
+        // flatten headers into a map
+        import scala.collection.JavaConversions._
+        for (x <- uc.getHeaderFields.entrySet().iterator())
+          if (x.getKey() != null)
+            head.put(x.getKey, x.getValue.mkString)
+
+        val r = SnakkResponse(resCode, rc, head.toMap.asInstanceOf[Map[String,String]],
+          "", ctype, rq.id)
+
+        log("... sending response: " + r)
+        return r
+      }
+    }
   }
 
 
   def log (s:String) : Unit = {
-    println("now - " + " " +  s);
+    println("SNAKKPROXYREMOTE " +  s);
   }
 
   def first100 (s:String) = {
