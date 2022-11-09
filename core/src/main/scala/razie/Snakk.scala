@@ -42,10 +42,19 @@ class SnakkUrl(
 }
 
 /**
- * rapid decomposition of data in different formats, from different sources
- *
- * NOTE that snakking will wrap the snacked so you'll need to unwrap at the end, so an expression like
- * { root \ "j" map identity }  is the same as { for ( n <- root \ "j" ) yield n }
+  * rapid decomposition of data in different formats, from different sources. See more at https://github.com/razie/snakked
+  *
+  * POST:
+  * val xmlFeed  = url ("http://feeds.razie.com/Razblog?format=xml", Map("field1"->"f1"), "POST")
+  *
+  * FORM:
+  * val xmlFeed  = url ("http://feeds.razie.com/Razblog?format=xml").form (Map("name" -> "value"))
+  *
+  * Actual reading:
+  * val root = Snakk.json(xmlFeed)
+  *
+  * NOTE that snakking will wrap the snacked so you'll need to unwrap at the end, so an expression like
+  * { root \ "j" map identity }  is the same as { for ( n <- root \ "j" ) yield n }
  */
 object Snakk {
   /** build a URL

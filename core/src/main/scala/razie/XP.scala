@@ -59,7 +59,10 @@ case class XP[T](val gp: GPath) {
   /** return the matching single element - solve this path starting with the root and the given solving strategy */
   def xpe(ctx: XpSolver[T], root: T): T = xpl(ctx, root).head
 
-  /** return the matching attribute - solve this path starting with the root and the given solving strategy */
+  /** return the matching attribute - solve this path starting with the root and the given solving strategy
+    *
+    * if you expect more than one match, use the xpla
+    */
   def xpa(ctx: XpSolver[T], root: T): String = {
     gp.requireAttr
     ixpl(ctx, root).headOption.map {
@@ -182,6 +185,9 @@ case class GPath(val expr: String) {
 
   /** the first element after a ** */
   def afterSS: XpElement = elements(elements.indexWhere(_.name == "**") + 1)
+
+  override def toString = elements.mkString("/")
+
 }
 
 /** overwrite this if you want other scriptables for conditions...it's just a syntax marker */
@@ -224,10 +230,17 @@ class XpCond(val expr: String) {
     }
   }
 
+  def asMap = {
+    Map(a -> v)
+  }
+
   override def toString = expr
 }
 
-/** the strategy to break down the input based on the current path element. The solving algorithm is: apply current sub-path to current sub-nodes, get the results and RESTs. Filter by conditions and recurse.  */
+/** the strategy to break down the input based on the current path element. The solving algorithm is:
+  * apply current sub-path to current sub-nodes, get the results and RESTs.
+  * Filter by conditions and recurse.
+  */
 trait XpSolver[T] {
 
   /** type U stands for the continuation that following methods pass to themselves. 
@@ -327,7 +340,14 @@ class XpElement(val expr: String) {
     case _ => assoc_
   }
 
-  override def toString = List(assoc_, attr, prefix, name, scond) mkString ","
+  override def toString = {
+    val a = Option(assoc_).filter(_ != "").map(x=> s"{$x}").mkString
+    val t = Option(attr).filter(_ != "").map(x=> s"$x").mkString
+    val p = Option(prefix).filter(_ != "").map(x=> s"$x:").mkString
+    val n = Option(name).filter(_ != "").map(x=> s"$x").mkString
+    val c = Option(scond).filter(_ != "").map(x=> s"[$x]").mkString
+    s"$a$t$p$n$c"
+  }
 }
 
 /** this example resolves strings with the /x/y/z format */
