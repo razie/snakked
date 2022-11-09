@@ -83,7 +83,8 @@ public class Comms {
                 ", code=" + code +
                 ", responseCode=" + respCode+
                 ", errStream=" + ec;
-        logger.trace(3, msg + "error response=" + content);
+        String fec = content != null && content.length() > 2000 ? content.substring(0,2000) : ""+content;
+        logger.warn("Comms Exception: " + msg + "big error response=" + fec);
         throw new CommRtException(msg, uc, getResponseCode(uc)).withDetails(content);
       }
     }
