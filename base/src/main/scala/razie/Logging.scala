@@ -1,6 +1,26 @@
 package razie
 
-import org.fusesource.scalate.{ util => sfu }
+import org.fusesource.scalate.{util => sfu}
+import scala.language.reflectiveCalls
+
+/** use this to intercept err/warns etc if needed */
+object Logging {
+  trait Wrapper {
+    def error (message: => String): Unit
+    def error (message: => String, e: Throwable): Unit
+
+    def warn  (message: => String): Unit
+    def warn  (message: => String, e: Throwable): Unit
+
+    def info  (message: => String): Unit
+    def info  (message: => String, e: Throwable): Unit
+
+    def audit (message: => String): Unit
+    def audit (message: => String, e: Throwable): Unit
+  }
+
+  var wrapper : Option[Wrapper] = None
+}
 
 /** A Logging trait you can mix into an implementation class without affecting its public API
  *
@@ -10,6 +30,8 @@ import org.fusesource.scalate.{ util => sfu }
  *  NOTE: the formatting uses java.lang.String.format NOT slf4j formatting by reason of clusterfuk
  */
 trait Logging {
+
+  import razie.Logging.wrapper
 
   protected val logger = sfu.Log(getClass)
 
@@ -33,20 +55,20 @@ trait Logging {
 
   @inline protected def tee(message: => String): String = { val m = t(message); logger.trace(m); m }
 
-  @inline protected def error(message: => String): Unit = logger.error(t(message))
-  @inline protected def error(message: => String, e: Throwable): Unit = logger.error(e, t(message))
+  @inline protected def error(message: => String): Unit = { logger.error(t(message)); wrapper.foreach(_.error(message))}
+  @inline protected def error(message: => String, e: Throwable): Unit = {logger.error(e, t(message)); wrapper.foreach(_.error(message, e))}
 
-  @inline protected def warn(message: => String): Unit = logger.warn(t(message))
-  @inline protected def warn(message: => String, e: Throwable): Unit = logger.warn(e, t(message))
+  @inline protected def warn(message: => String): Unit = {logger.warn(t(message)); wrapper.foreach(_.warn(message))}
+  @inline protected def warn(message: => String, e: Throwable): Unit = {logger.warn(e, t(message)); wrapper.foreach(_.warn(message, e))}
 
-  @inline protected def info(message: => String): Unit = logger.info(t(message))
-  @inline protected def info(message: => String, e: Throwable): Unit = logger.info(e, t(message))
-  @inline protected def log(message: => String): Unit = logger.info(t(message))
-  @inline protected def log(message: => String, e: Throwable): Unit = logger.info(e, t(message))
+  @inline protected def info(message: => String): Unit = {logger.info(t(message)); wrapper.foreach(_.info(message))}
+  @inline protected def info(message: => String, e: Throwable): Unit = {logger.info(e, t(message)); wrapper.foreach(_.info(message, e))}
+  @inline protected def log(message: => String): Unit = {logger.info(t(message)); wrapper.foreach(_.info(message))}
+  @inline protected def log(message: => String, e: Throwable): Unit = {logger.info(e, t(message)); wrapper.foreach(_.info(message, e))}
 
   // TODO audit shoudl go in log no matter what
-  @inline protected def audit(message: => String): Unit = logger.info("AUDIT " + t(message))
-  @inline protected def audit(message: => String, e: Throwable): Unit = logger.info(e, "AUDIT " + t(message))
+  @inline protected def audit(message: => String): Unit = {logger.info("AUDIT " + t(message)); wrapper.foreach(_.audit(message))}
+  @inline protected def audit(message: => String, e: Throwable): Unit = {logger.info(e, "AUDIT " + t(message)); wrapper.foreach(_.audit(message, e))}
 
   @inline protected def debug(message: => String): Unit = logger.debug(t(message))
   @inline protected def debug(message: => String, e: Throwable): Unit = logger.debug(e, t(message))
@@ -57,28 +79,14 @@ trait Logging {
   /** c++ memories, anyone... i do like to use the cout << x instead of println(x) */
   @inline def clog = new clog
   @inline class clog() {
-    def <(x: Any) = { log("< " + x); this }
-    def <<(x: Any) = { log("<<  " + x); this }
-    def <<<(x: Any) = { log("<<<   " + x); this }
-
-    def |(x: Any) = this < x
-    def ||(x: Any) = this << x
-    def |||(x: Any) = this <<< x
-
+    def <<(x: Any) = { log(x.toString); this }
     def eol = { this }
   }
 
   /** c++ memories, anyone... i do like to use the cout << x instead of println(x) */
   @inline def cdebug = new cdebug()
   @inline class cdebug() {
-    def <(x: Any) = { debug("< " + x); this }
-    def <<(x: Any) = { debug("<<  " + x); this }
-    def <<<(x: Any) = { debug("<<<   " + x); this }
-
-    def |(x: Any) = this < x
-    def ||(x: Any) = this << x
-    def |||(x: Any) = this <<< x
-
+    def <<(x: Any) = { debug(x.toString); this }
     def eol = { this }
   }
 }

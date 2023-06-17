@@ -122,7 +122,7 @@ object SnakkProxyRemote {
   }
 
   /** proxy one request */
-  def doProxy (rq:SnakkRequest) : SnakkResponse = {
+  def doProxy (rq:SnakkRequest, encode64:Boolean = true) : SnakkResponse = {
     var uc:java.net.URLConnection = null
 
     try {
@@ -164,10 +164,10 @@ object SnakkProxyRemote {
 
       val ctype = head.get("Content-Type").orElse(head.get("content-type")).getOrElse("")
       val content =
-        if (false && Snakk.isText(ctype)) response.toString
+        if (Snakk.isText(ctype)) response.toString
         else "SNAKK64" + Base64.encodeBytes(response.getData())
 
-      val r = SnakkResponse(resCode, rc, head.toMap.asInstanceOf[Map[String,String]], content, ctype, rq.id)
+      val r = SnakkResponse (resCode, rc, head.toMap.asInstanceOf[Map[String,String]], content, ctype, rq.id)
 
       log("... sending response: " + r)
       return r
@@ -188,7 +188,7 @@ object SnakkProxyRemote {
           if (x.getKey() != null)
             head.put(x.getKey, x.getValue.mkString)
 
-        val r = SnakkResponse(resCode, rc, head.toMap.asInstanceOf[Map[String,String]],
+        val r = SnakkResponse (resCode, rc, head.toMap.asInstanceOf[Map[String,String]],
           "", ctype, rq.id)
 
         log("... sending response: " + r)

@@ -5,7 +5,6 @@
 package razie
 
 import java.net.URLConnection
-
 import org.json.JSONObject
 import razie.xp.BeanSolver
 import razie.xp.JsonSolver
@@ -13,7 +12,8 @@ import razie.xp.JsonWrapper
 import razie.xp.MyBeanSolver
 import com.razie.pub.comms.Comms
 import com.razie.pub.util.Base64
-
+import java.util.Base64
+import play.api.mvc.{Cookies, Session}
 import scala.collection.mutable
 
 /** 
@@ -129,132 +129,41 @@ object Snakk {
   /** snakk a DOM parsed already */
   def apply(node: scala.xml.Elem) = xml(node)
   /** snakk a DOM parsed already */
-  def xml(node: scala.xml.Elem) = new Wrapper(node, ScalaDomXpSolver)
+  def xml(node: scala.xml.Elem) = new XpWrapper(node, ScalaDomXpSolver)
   /** snakk an XML contained in a String */
-  def xml(body: String) = new Wrapper(scala.xml.XML.loadString(body), ScalaDomXpSolver)
+  def xml(body: String) = new XpWrapper(scala.xml.XML.loadString(body), ScalaDomXpSolver)
   /** snakk an XML coming from an URL */
-  def xml(url: SnakkUrl) = new Wrapper(scala.xml.XML.loadString(body(url)), ScalaDomXpSolver) // TODO use AA for auth
+  def xml(url: SnakkUrl) = new XpWrapper(scala.xml.XML.loadString(body(url)), ScalaDomXpSolver) // TODO use AA for auth
   /** helper - simply parse an xml string */
   def xmlParsed(node: String) = scala.xml.XML.loadString(node)
 
-  def str(node: String) = new Wrapper(node, StringXpSolver)
-  def str(url: SnakkUrl) = new Wrapper(body(url), StringXpSolver)
+  def str(node: String) = new XpWrapper(node, StringXpSolver)
+  def str(url: SnakkUrl) = new XpWrapper(body(url), StringXpSolver)
 
   /** snakk a bean */
-  def bean(node: Any) = new Wrapper(node, BeanSolver)
+  def bean(node: Any) = new XpWrapper(node, BeanSolver)
   /** if you need to exclude certain methods/fields like generated fields, use some matching rules */
-  def bean(node: Any, excludeMatches: List[String => Boolean]) = new Wrapper(node, new MyBeanSolver(excludeMatches))
+  def bean(node: Any, excludeMatches: List[String => Boolean]) = new XpWrapper(node, new MyBeanSolver(excludeMatches))
 
   /** snakk a parsed JSON document */
   def apply(node: JSONObject) = json(node)
   /** snakk a parsed JSON document */
-  def json(node: JSONObject) = new Wrapper[JsonWrapper](JsonSolver.WrapO(node), JsonSolver)
+  def json(node: JSONObject) = new XpWrapper[JsonWrapper](JsonSolver.WrapO(node), JsonSolver)
   /** snakk a JSON document contained in the String */
-  def json(node: String) = new Wrapper[JsonWrapper](JsonSolver.wrapOorA(node), JsonSolver)
+  def json(node: String) = new XpWrapper[JsonWrapper](JsonSolver.wrapOorA(node), JsonSolver)
   /** snakk a JSON document coming from an URL */
-  def json(url: SnakkUrl):Wrapper[JsonWrapper] = json(body(url))
+  def json(url: SnakkUrl):XpWrapper[JsonWrapper] = json(body(url))
   /** helper - simply parse a json string */
   def jsonParsed(node: String) = new JSONObject(node) // todo can be array too
 
   /** this will go to the URL and try to figure out what the url is */
-  def apply(node: String) = new Wrapper(node, StringXpSolver)
+  def apply(node: String) = new XpWrapper(node, StringXpSolver)
 
   /** an empty node */
   def empty = new ListWrapper(Nil, StringXpSolver)
 
-  /** OO wrapper for self-solving XP elements HEY this is like an open monad :) */
-  trait BaseWrapper[T] {
-    /** factory method - overwrite with yours*/
-    def wrapList (nodes:List[T], ctx:XpSolver[T]) = new ListWrapper(nodes, ctx)
-    def wrapNode (node:T, ctx:XpSolver[T]) = new Wrapper(node, ctx)
 
-    /** the list of children with the respective tag */
-    def \(name: String): ListWrapper[T]
-    /** the head of the list of children with the respective tag */
-    def \\\(name: String): T
-    /** the list of children two levels down with the respective tag */
-    def \*(name: String): ListWrapper[T]
-    /** the head of the list of children two levels down with the respective tag */
-    def \\*(name: String): T
-    /** the single attributes with the respective name */
-    def \@@(name: String): String
-    /** the attributeS with the respective name */
-    def \\@(name: String): List[String]
-  }
-
-  /** List wrapper for self-solving XP elements */
-  class ListWrapper[T](val nodes: List[T], val ctx: XpSolver[T]) extends BaseWrapper[T] {
-    def xpl  (path:String) = nodes.flatMap(n => XP[T](path).xpl(ctx, n))
-    def xpa  (path:String) = nodes.headOption.map(n => XP[T](path).xpa(ctx, n))
-    def xpla (path:String) = nodes.flatMap(n => XP[T](path).xpla(ctx, n))
-
-    def wrap (nodes:List[T]) = new ListWrapper(nodes, ctx)
-    def wrap (node:T) = new Wrapper(node, ctx)
-
-    /** the list of children with the respective tag */
-    def \(name: String): ListWrapper[T] = wrapList(nodes.flatMap(n => XP[T]("*/" + name).xpl(ctx, n)), ctx)
-    /** the head of the list of children with the respective tag */
-    def \\\(name: String): T = (this \ name).headOption.get
-    /** the list of children two levels down with the respective tag */
-    def \*(name: String): ListWrapper[T] = wrapList(nodes.flatMap(n => XP[T]("*/*/" + name).xpl(ctx, n)), ctx)
-    /** the list of children many levels down with the respective tag */
-    def \\(name: String): ListWrapper[T] = wrapList(nodes.flatMap(n => XP[T]("**/" + name).xpl(ctx, n)), ctx)
-    /** the head of the list of children two levels down with the respective tag */
-    def \\*(name: String): T = (this \* name).headOption.get
-    /** the list of attributes with the respective name */
-    def \@(name: String): List[String] = nodes map (n => XP[T](if (name.contains("@")) name else "@" + name).xpa(ctx, n))
-    /** the single attributes with the respective name */
-    def \@@(name: String): String = nodes.headOption.map(n => XP[T](if (name.contains("@")) name else "@" + name).xpa(ctx, n)) getOrElse null
-    /** the attributeS with the respective name */
-    def \\@(name: String): List[String] = nodes.flatMap(n => XP[T](if (name.contains("@")) name else "@" + name).xpla(ctx, n))
-
-    def apply(i: Int) = wrapNode(nodes.apply(i), ctx)
-    def \(i: Int) = wrapNode(nodes.apply(i), ctx)
-
-    def foreach[B](f: T => B): Unit = nodes.foreach(f)
-    def map[B](f: T => B): List[B] = nodes.map(f)
-    def flatMap[B](f: T => List[B]): List[B] = nodes.flatMap(f)
-
-    def head = headOption.get
-    def head(n: Any) = headOption getOrElse n
-    def headOption = nodes.headOption
-    //  def firstOption = nodes.firstOption map (new Wrapper(_, ctx))
-
-    def ++ (other:ListWrapper[T]) = new ListWrapper(nodes ++ other.nodes, ctx)
-
-    def size = nodes.size
-    override def toString = nodes.toString
-  }
-
-  /** OO wrapper for self-solving XP elements */
-  class Wrapper[T](val node: T, val ctx: XpSolver[T]) extends BaseWrapper[T] {
-    def xpl  (path:String) = XP[T](path).xpl(ctx, node)
-    def xpa  (path:String) = XP[T](path).xpa(ctx, node)
-    def xpla (path:String) = XP[T](path).xpla(ctx, node)
-
-    def wrap (nodes:List[T]) = new ListWrapper(nodes, ctx)
-    def wrap (node:T) = new Wrapper(node, ctx)
-
-    /** the list of children with the respective tag */
-    def \(name: String): ListWrapper[T] = wrapList(XP[T](name).xpl(ctx, node), ctx)
-    /** the head of the list of children with the respective tag */
-    def \\\(name: String): T = (this \ name).headOption.get
-    /** the list of children two levels down with the respective tag */
-    def \*(name: String): ListWrapper[T] = wrapList(XP[T]("*/" + name).xpl(ctx, node), ctx)
-    /** the list of children many levels down with the respective tag */
-    def \\(name: String): ListWrapper[T] = wrapList(XP[T]("**/" + name).xpl(ctx, node), ctx)
-    /** the head of the list of children two levels down with the respective tag */
-    def \\*(name: String): T = (this \* name).headOption.get
-    /** the attribute with the respective name */
-    def \@(name: String): String = XP[T](if (name.contains("@")) name else "@" + name).xpa(ctx, node)
-    /** the single attributes with the respective name */
-    def \@@(name: String): String = this \@ name
-    /** the attributeS with the respective name */
-    def \\@(name: String): List[String] = XP[T](if (name.contains("@")) name else "@" + name).xpla(ctx, node)
-
-    override def toString = Option(node).map(_.toString).toString
-  }
-
+ /** sugar for strings with fallback */
   class DString (orig: =>String) {
    override def toString = orig
 
@@ -262,7 +171,8 @@ object Snakk {
 
    def toOption = Option(orig)
   }
-  
+
+  /** sugar for strings with fallback */
   class DfltStringVal (orig:()=>String, fallback: ()=>String) {
    override def toString = {
      val o = orig()
@@ -304,7 +214,7 @@ object Snakk {
     val h = m("headers").asInstanceOf[mutable.HashMap[String, String]]
     val ctype = h.get("Content-Type").orElse(h.get("content-type")).getOrElse("")
     val dec =
-      if(x(1).startsWith("SNAKK64")) Base64.decode(x(1).substring(7))
+      if(x(1).startsWith("SNAKK64")) com.razie.pub.util.Base64.decode(x(1).substring(7))
       else x(1).getBytes()
 
     SnakkResponse(
@@ -321,6 +231,14 @@ object Snakk {
 }
 
 case class SnakkRequest (protocol: String, method: String, url: String, headers: Map[String, String], content: String, id:String = "") {
+
+  private var _cookies: Cookies = null
+  def cookies = _cookies
+  def withCookies(u: Cookies) = {
+    _cookies = u
+    this
+  }
+
   def toJson = {
     val m = new mutable.HashMap[String, Any]()
     m.put("id", id)
@@ -328,6 +246,7 @@ case class SnakkRequest (protocol: String, method: String, url: String, headers:
     m.put("method", method)
     m.put("url", url)
     m.put("headers", headers)
+    m.put("cookies", Option(cookies).map(_.mkString))
     m.put("content", content)
     m.toMap
   }
@@ -335,19 +254,38 @@ case class SnakkRequest (protocol: String, method: String, url: String, headers:
   override def toString = razie.js.tojsons(toJson).replaceAllLiterally("\n", "")
 }
 
-case class SnakkResponse (responseCode:String, resCode:Int, headers: Map[String, String], content: String, ctype:String, id:String="") {
+/** contains all the details of a response for a snakk remote call */
+case class SnakkResponse (
+  responseCode:String,
+  resCode:Int,
+  headers: Map[String, String],
+  content: String,
+  ctype:String,
+  id:String="") {
+
+  private var _cookies: Cookies = null
+  def cookies = _cookies
+  def withCookies(u: Cookies) = {
+    _cookies = u
+    this
+  }
 
   /** it will not include the content */
   def toJson = {
     val m = new mutable.HashMap[String, Any]()
     m.put("id", id)
-    m.put("responseCode", responseCode)
+    if(responseCode != null) m.put("responseCode", responseCode)
     m.put("resCode", resCode.toString)
-    m.put("headers", headers)
+    if(headers != null) m.put("headers", headers)
+    m.put("cookies", Option(cookies).map(_.mkString))
     m.put("content", "")
-    m.put("ctype", ctype)
+    if(ctype != null) m.put("ctype", ctype)
     m.toMap
   }
+
+  def decodeContent =
+    if(content.startsWith("SNAKK64")) com.razie.pub.util.Base64.decode(content.substring(7))
+    else content.getBytes()
 
   override def toString = razie.js.tojsons(toJson).replaceAllLiterally("\n", "")
 }
