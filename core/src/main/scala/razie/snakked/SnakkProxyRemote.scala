@@ -6,7 +6,7 @@
   **/
 package razie.snakked
 
-import java.net.{InetAddress, URL}
+import java.net.{HttpURLConnection, InetAddress, URL}
 import com.razie.pub.comms.Comms
 import com.razie.pub.util.Base64
 import java.io.IOException
@@ -123,17 +123,32 @@ object SnakkProxyRemote {
 
   /** proxy one request */
   def doProxy (rq:SnakkRequest, encode64:Boolean = true) : SnakkResponse = {
-    var uc:java.net.URLConnection = null
+//    var uc:java.net.URLConnection = null
+    var uc:java.net.HttpURLConnection = null
 
     try {
       log(s"... snakking ${rq.url}")
       val u = rq.protocol + "://" + rq.url
 
       // make the call
-      uc = new URL(u).openConnection
+      uc = (new URL(u).openConnection).asInstanceOf[HttpURLConnection]
       for (a <- rq.headers) {
         uc.setRequestProperty(a._1, a._2)
       }
+
+      uc.setRequestMethod(rq.method)
+      if (rq.method == "POST" || rq.method == "PUT") {
+        uc.setDoOutput(true) // Triggers POST.
+
+        try {
+          val os = uc.getOutputStream
+          try {
+            val input = rq.content.getBytes("utf-8")
+            os.write(input, 0, input.length)
+          } finally if (os != null) os.close()
+        }
+
+      };
 
       log("...hdr: " + uc.getHeaderFields)
 
