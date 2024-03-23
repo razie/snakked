@@ -21,7 +21,16 @@ public class ByteArray {
         reset();
     }
 
-    public byte[] getData() { return data; }
+    public byte[] getData() {
+        if(size > 0) {
+            // trim so no empty buffer is returned
+            byte[] res = new byte[size];
+            System.arraycopy(data, 0, res, 0, size);
+            return res;
+        } else {
+            return data;
+        }
+    }
 
     public void append(byte[] newData, int lenght) {
         if (data.length - size < lenght) { // expand it...
