@@ -220,7 +220,7 @@ public class Comms {
   }
 
   /**
-   * Stream the response of a URL.
+   * Stream the response of a URL. - this is used by snakk for GET
    *
    * @param url can be local or remote
    * @param body null or payload to send - even GET can send body
