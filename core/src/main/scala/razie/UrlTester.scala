@@ -1,6 +1,6 @@
 package razie
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{FlatSpec, Matchers, MustMatchers}
 //import org.scalatest.matchers.ShouldMatchers
 import com.razie.pub.comms.CommRtException
 import java.net.URL
@@ -16,8 +16,8 @@ private object TestHelper {
  *  
  *  See class snakking.test.SampleWebTest for examples
  */
-trait UrlTester { this: FlatSpec with Matchers =>
-  import TestHelper._
+trait UrlTester { this: FlatSpec with MustMatchers =>
+  import razie.TestHelper._
 
   /** helper class, will add the test methods */
   case class MyUrl(url:SnakkUrl) {
@@ -47,25 +47,25 @@ trait UrlTester { this: FlatSpec with Matchers =>
     /** should case - url access ok, contains string */
     def sok(incl: String)(implicit hostport: String) = {
       (s+uniq) should "be visible" in {
-        this.wget should include(incl)
+        assert (this.wget.contains (incl))
       }
     }
 
     /** should case - url access ok, NOT contains string */
     def snok(incl: String)(implicit hostport: String) = {
       (s+uniq) should "be visible but exclude " + incl in {
-        this.wget should not include (incl)
+        assert (! this.wget.contains (incl))
       }
     }
 
     /** should matcher - url access ok, contains string */
     def eok(incl: String)(implicit hostport: String) = {
-      this.wget should include(incl)
+      assert(this.wget.contains(incl))
     }
 
     /** should matcher - url access ok, NOT contains string */
     def enok(incl: String)(implicit hostport: String) = {
-      this.wget should not include (incl)
+      assert (! this.wget.contains (incl))
     }
   }
 
