@@ -47,93 +47,167 @@ import java.lang.reflect.Field
  * The main features of this implementation are: 1) small and embeddable 2) works for most every-day things and
  * 3) extensiblity: you can easily plugin resolvers.
  */
-case class XP[T](val gp: GPath) {
+case class XP[T] (val gp: GPath) {
   XP.debug("building XP with GPath: " + gp.elements.mkString("/"))
 
   /** return the matching list - solve this path starting with the root and the given solving strategy */
-  def xpl(ctx: XpSolver[T], root: T): List[T] = {
+  def xps (ctx: XpSolver[T], root: T): DieselProducer[T] = {
     gp.requireNotAttr
-    ixpl(ctx, root)
+    ixpl (ctx, root)
+    ???
+  }
+
+  /** return the matching list - solve this path starting with the root and the given solving strategy */
+  def xpl (ctx: XpSolver[T], root: T): List[T] = {
+    gp.requireNotAttr
+    ixpl (ctx, root)
   }
 
   /** return the matching single element - solve this path starting with the root and the given solving strategy */
-  def xpe(ctx: XpSolver[T], root: T): T = xpl(ctx, root).head
+  def xpe (ctx: XpSolver[T], root: T): T = xpl (ctx, root).head
 
   /** return the matching attribute - solve this path starting with the root and the given solving strategy
     *
     * if you expect more than one match, use the xpla
     */
-  def xpa(ctx: XpSolver[T], root: T): String = {
+  def xpa (ctx: XpSolver[T], root: T): String = {
     gp.requireAttr
-    ixpl(ctx, root).headOption.map {
-      ctx.getAttr(_, gp.elements.last.name)
-    }.getOrElse("")
+    ixpl (ctx, root).headOption.map {
+      ctx.getAttr (_, gp.elements.last.name)
+    }.getOrElse ("")
   }
 
   /** return the list of matching attributes - solve this path starting with the root and the given solving strategy */
-  def xpla(ctx: XpSolver[T], root: T): List[String] = {
+  def xpla (ctx: XpSolver[T], root: T): List[String] = {
     gp.requireAttr
-    ixpl(ctx, root).map(ctx.getAttr(_, gp.elements.last.name))
+    ixpl (ctx, root)
+        .map(ctx.getAttr (_, gp.elements.last.name))
   }
 
   /** if you'll keep using the same context there's no point dragging it around */
-  def using(ctx: XpSolver[T]) = new XPSolved(this, ctx)
+  def using (ctx: XpSolver[T]) = new XPSolved(this, ctx)
 
   /** internal implementation - a simple fold */
-  private def ixpl(ctx: XpSolver[T], root: T): List[T] =
-    if (gp.nonaelements.size == 0)
+  private def ixpl (ctx: XpSolver[T], root: T): List[T] =
+    if (gp.nonaelements.length == 0)
       root :: Nil
     else
       ctx.unwrap(
-        if (gp.nonaelements.size == 1) {
-          val c = ctx.children(root, None) // TODO this approach means we always introspec all to find one...
-          val ret = ctx.reduce(List(c), gp.head).toList.map(_._1)
+        if (gp.nonaelements.length == 1) {
+          val c = ctx.children (root, None) // TODO this approach means we always introspec all to find one...
+          val ret = ctx.reduce (List(c), gp.head).toList.map(_._1)
           // if unlucky, try children
           if (ret.size > 0) ret
-          else solve(gp.head, ctx, List(c)).toList.asInstanceOf[List[(T, ctx.U)]].map(_._1)
+          else solve (gp.head, ctx, List(c)).toList.asInstanceOf[List[(T, ctx.U)]].map(_._1)
         } else for (
           e <- (if (gp.head.name == "**") gp.nonaelements else gp.exceptFirst).foldLeft(
-            ctx.reduce(List(ctx.children(root, None)), gp.head).toList)((x, xe) => solve(xe, ctx, x).asInstanceOf[List[(T, ctx.U)]])
+            ctx
+                .reduce (List(ctx.children(root, None)), gp.head)
+                .toList)((x, xe) => solve(xe, ctx, x).asInstanceOf[List[(T, ctx.U)]])
         ) yield e._1)
 
-  /** from res get the path and then reduce with condition looking for elements */
-  private def solve(xe: XpElement, ctx: XpSolver[T], res: LCC): LCC = {
+  /** from current result, get the path and then reduce with condition looking for elements */
+  private def solve (xe: XpElement, ctx: XpSolver[T], res: LCC): LCC = {
     if ("**" == xe.name)
-      ctx.reduce(recurseSS(xe, gp.afterSS, ctx, res.asInstanceOf[List[(T, ctx.U)]]).asInstanceOf[List[(T, ctx.U)]], xe).toList
+      ctx.reduce (
+        recurseSS (xe, gp.afterSS, ctx, res.asInstanceOf[List[(T, ctx.U)]])
+            .asInstanceOf[List[(T, ctx.U)]], xe
+      ).toList
     else
-      for (e <- res.asInstanceOf[List[(T, ctx.U)]]; x <- ctx.reduce(ctx.getNext(e, xe.name, xe.assoc, Some(xe)), xe)) yield x
+      for (
+        e <- res.asInstanceOf[List[(T, ctx.U)]];
+        x <- ctx.reduce (ctx.getNext (e, xe.name, xe.assoc, Some(xe)), xe)
+      ) yield x
   }
 
   type LCC = List[Any] // sorry, can't workaround this - is typecasted everywhere
 
   // must collect all possibilities recursively
-  private def recurseSS(xe: XpElement, next: XpElement, ctx: XpSolver[T], res: LCC): LCC = {
+  private def recurseSS (thisElement: XpElement, nextElement: XpElement, ctx: XpSolver[T], res: LCC): LCC = {
     val m = for (
       e <- res.asInstanceOf[List[(T, ctx.U)]];
       x <- {
-        if (!ctx.getNext(e, next.name, next.assoc, Some(next)).isEmpty) e :: Nil
-        else recurseSS(xe, next, ctx, ctx.getNext(e, "*", "", null).toList)
+        if (! ctx.getNext (e, nextElement.name, nextElement.assoc, Some(nextElement)).isEmpty) e :: Nil
+        else recurseSS (thisElement, nextElement, ctx, ctx.getNext(e, "*", "", null).toList)
       }
     ) yield x
     m
   }
 
+  type PLCC = PaginatedCont // sorry, can't workaround this - is typecasted everywhere
+
+  // must collect all possibilities recursively
+  private def recurseSS2 (thisElement: XpElement, nextElement: XpElement, ctx: XpSolver[T], res: PLCC): PLCC = {
+    val pc = new PaginatedCont(thisElement, nextElement, ctx, res)
+
+    val m = for (
+      e <- res.asInstanceOf[List[(T, ctx.U)]];
+      x <- {
+        if (! ctx.getNext (e, nextElement.name, nextElement.assoc, Some(nextElement)).isEmpty) e :: Nil
+        else recurseSS (thisElement, nextElement, ctx, ctx.getNext(e, "*", "", null).toList)
+      }
+    ) yield x
+    m
+  pc
+  }
+
   /* looking for an attribute */
-  private def solvea(xe: XpElement, ctx: XpSolver[Any], res: Any): String =
+  private def solvea (xe: XpElement, ctx: XpSolver[Any], res: Any): String =
     ctx.getAttr(res, xe.name)
+
+
+  /** paginated continuation */
+  class PaginatedCont (val thisElement: XpElement, val nextElement: XpElement, val ctx: XpSolver[T], val res: PLCC) {
+
+    val list = res.asInstanceOf[List[(T, ctx.U)]]
+    var curIdx = 0
+
+    def moveOne (from: Int, size: Int): LCC = {
+      if(list.size > curIdx) Nil
+      else {
+        val e = list.apply(curIdx)
+        val next =  ctx.getNext (e, nextElement.name, nextElement.assoc, Some(nextElement))
+
+        val x = if (!next.isEmpty) e :: Nil // there's more of this type to consume
+        else recurseSS(from, size, ctx.getNext (e, "*", "", null).toList) //
+      }
+
+
+      val m = for (
+        e <- list;
+        x <- {
+          if (!ctx.getNext(e, nextElement.name, nextElement.assoc, Some(nextElement)).isEmpty) e :: Nil
+          else recurseSS(from, size, ctx.getNext(e, "*", "", null).toList)
+        }
+      ) yield x
+      m
+    }
+
+    def recurseSS(from: Int, size: Int, res: LCC): LCC = {
+      val m = for (
+        e <- list;
+        x <- {
+          if (!ctx.getNext(e, nextElement.name, nextElement.assoc, Some(nextElement)).isEmpty) e :: Nil
+          else recurseSS(from, size, ctx.getNext(e, "*", "", null).toList)
+        }
+      ) yield x
+      m
+    }
+  }
+
 }
 
 /** Example of creating a dedicated solver */
-object XP extends Logging {
-  def forScala(xpath: String) = XP[scala.xml.Elem](xpath) using ScalaDomXpSolver
-  def forString(xpath: String) = XP[String](xpath) using StringXpSolver
-  def forBean(xpath: String) = XP[Any](xpath) using razie.xp.BeanSolver
-  def forJson(xpath: String) = XP[razie.xp.JsonWrapper](xpath) using razie.xp.JsonSolver
+object XP extends razie.Logging {
+  def forScala  (xpath: String) = XP[scala.xml.Elem](xpath) using ScalaDomXpSolver
+  def forString (xpath: String) = XP[String](xpath) using StringXpSolver
+  def forBean   (xpath: String) = XP[Any](xpath) using razie.xp.BeanSolver
+  def forJson   (xpath: String) = XP[razie.xp.JsonWrapper](xpath) using razie.xp.JsonSolver
 
-  def apply[T](expr: String) = { new XP[T](GPath(expr)) }
+  def apply[T]  (expr: String) = { new XP[T](GPath(expr)) }
 
   /** check tag matches what with * and ** - TODO make it private */
-  def stareq(what: String, tag: String) =
+  def stareq (what: String, tag: String) =
     if ("*" == tag || "**" == tag) true
     else what == tag
     
@@ -173,14 +247,14 @@ case class GPath(val expr: String) {
 
   lazy val startsFromRoot = expr.startsWith("/")
 
-  def isAttr = (elements.size > 0 && elements.last.attr == "@")
+  def isAttr = (elements.length > 0 && elements.last.attr == "@")
 
-  def requireAttr =
+  def requireAttr:Unit =
     if (elements.last.attr != "@")
       throw new IllegalArgumentException("ERR_XP result should be attribute but it's an entity, in " + expr)
 
-  def requireNotAttr =
-    if (elements.size > 0 && elements.last.attr == "@")
+  def requireNotAttr:Unit =
+    if (elements.length > 0 && elements.last.attr == "@")
       throw new IllegalArgumentException("ERR_XP result should be entity but it's an attribute, in " + expr)
 
   /** the first element after a ** */
@@ -188,6 +262,39 @@ case class GPath(val expr: String) {
 
   override def toString = elements.mkString("/")
 
+}
+
+/** an element in the path: "{assoc}@prefix:name[cond]" */
+class XpElement (val expr: String) {
+  // todo maybe not allow space, but wrap the name in something automatically if spaces present?
+  val (assoc_, attr, prefix, name, scond) = pa
+  val cond = XpCondFactory.make(scond)
+
+  /** parse a path element */
+  def pa = {
+    try {
+      val parser = """(\{.*\})*([@])*([\w]+\:)*([\$|\w\. -]+|\**)(\[.*\])*""".r
+      val parser (assoc_, attr, prefix, name, scond) = expr
+      (assoc_, attr, prefix, name, scond)
+    } catch {
+      case s:Throwable => throw new RuntimeException("Not valid XPATH: " + expr, s)
+    }
+  }
+
+  def assoc = assoc_ match {
+    // i don't know patterns very well this is plain ugly... :(
+    case s: String => { val p = """\{(\w)\}""".r; val p(aa) = s; aa }
+    case _ => assoc_
+  }
+
+  override def toString = {
+    val a = Option(assoc_) .filter(_ != "").map(x=> s"{$x}").mkString
+    val t = Option(attr)   .filter(_ != "").map(x=> s"$x").mkString
+    val p = Option(prefix) .filter(_ != "").map(x=> s"$x:").mkString
+    val n = Option(name)   .filter(_ != "").map(x=> s"$x").mkString
+    val c = Option(scond)  .filter(_ != "").map(x=> s"[$x]").mkString
+    s"$a$t$p$n$c"
+  }
 }
 
 /** overwrite this if you want other scriptables for conditions...it's just a syntax marker */
@@ -240,6 +347,9 @@ class XpCond(val expr: String) {
 /** the strategy to break down the input based on the current path element. The solving algorithm is:
   * apply current sub-path to current sub-nodes, get the results and RESTs.
   * Filter by conditions and recurse.
+  *
+  * T is the type of the entity resolved here
+  * U is the continuation
   */
 trait XpSolver[T] {
 
@@ -266,9 +376,9 @@ trait XpSolver[T] {
    *
    * @param root the node we'll start resolving from
    * @param xe - optional the current path element - you can use cond to filter result set directly when querying
-   * @return
+   * @return a new root (usually the same) and a continuation - this is the more interesting one
    */
-  def children(root: T, xe: Option[XpElement]): (T, U)
+  def children (root: T, xe: Option[XpElement]): (T, U)
 
   /**
    * get the next list of nodes at the current position in the path.
@@ -280,7 +390,7 @@ trait XpSolver[T] {
    * @param xe - optional the current path element - you can use cond to filter result set directly when querying
    * @return
    */
-  def getNext(curr: (T, U), tag: String, assoc: String, xe: Option[XpElement]): Iterable[(T, U)]
+  def getNext (curr: (T, U), tag: String, assoc: String, xe: Option[XpElement]): Iterable[(T, U)]
 
   /**
    * get the value of an attribute from the given node
@@ -288,7 +398,7 @@ trait XpSolver[T] {
    * @param curr the current element
    * @return the value, toString, of the attribute
    */
-  def getAttr(curr: T, attr: String): String
+  def getAttr (curr: T, attr: String): String
 
   /**
    * reduce the current set of possible nodes based on the given condition.
@@ -302,10 +412,10 @@ trait XpSolver[T] {
    * @param cond the condition to use for filtering - may be null if there's no condition at this point
    * @return
    */
-  def reduce(curr: Iterable[(T, U)], xe: XpElement): Iterable[(T, U)] =
+  def reduce (curr: Iterable[(T, U)], xe: XpElement): Iterable[(T, U)] =
     xe.cond match {
       case null => curr //.asInstanceOf[List[(T, U)]]
-      case _ => curr.filter(x => xe.cond.passes(x._1, this))
+      case _ => curr.filter (x => xe.cond.passes(x._1, this))
     }
 
   /**
@@ -314,40 +424,8 @@ trait XpSolver[T] {
    * @param root the node we'll start resolving from
    * @return
    */
-  def unwrap(root: List[T]): List[T] = root
+  def unwrap (root: List[T]): List[T] = root
 
-}
-
-/** an element in the path: "{assoc}@prefix:name[cond]" */
-class XpElement(val expr: String) {
-    // todo maybe not allow space, but wrap the name in something automatically if spaces present?
-  val (assoc_, attr, prefix, name, scond) = pa
-  val cond = XpCondFactory.make(scond)
-
-  def pa = {
-    try {
-      val parser = """(\{.*\})*([@])*([\w]+\:)*([\$|\w\. -]+|\**)(\[.*\])*""".r
-      val parser(assoc_, attr, prefix, name, scond) = expr
-      (assoc_, attr, prefix, name, scond)
-    } catch {
-      case s@_ => throw new RuntimeException("Not valid XPATH: " + expr, s)
-    }
-  }
-
-  def assoc = assoc_ match {
-    // i don't know patterns very well this is plain ugly... :(
-    case s: String => { val p = """\{(\w)\}""".r; val p(aa) = s; aa }
-    case _ => assoc_
-  }
-
-  override def toString = {
-    val a = Option(assoc_).filter(_ != "").map(x=> s"{$x}").mkString
-    val t = Option(attr).filter(_ != "").map(x=> s"$x").mkString
-    val p = Option(prefix).filter(_ != "").map(x=> s"$x:").mkString
-    val n = Option(name).filter(_ != "").map(x=> s"$x").mkString
-    val c = Option(scond).filter(_ != "").map(x=> s"[$x]").mkString
-    s"$a$t$p$n$c"
-  }
 }
 
 /** this example resolves strings with the /x/y/z format */
