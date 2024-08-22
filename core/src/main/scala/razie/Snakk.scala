@@ -74,7 +74,7 @@ object Snakk {
   /** retrieve the content from URL, as String
     * @param postContent optionally some content for post
     */
-  def conn(url: SnakkUrl, postContent:Option[String]=None) = url.method match {
+  def conn(url: SnakkUrl, postContent:Option[String]=None, tlsKeyStores:Option[String] = None) = url.method match {
     case "GET"  => Comms.streamUrlA(url.url.toString, postContent.getOrElse(""), AA map url.httpAttr)
 
     case "POST" | "PATCH" | "PUT" | "DELETE" | "TRACE" | "HEAD" | "OPTIONS" =>
