@@ -233,13 +233,18 @@ public class Comms {
 
     int cout = MAX_CONNECT_TIMEOUT;
     int tout = MAX_TIMEOUT;
-    if(httpArgs.length > 0) {
-      for (String a : httpArgs[0].getPopulatedAttr()) {
-        if (a.equals("snakkHttpOptions.readTimeout"))
-          tout = Integer.parseInt(httpArgs[0].sa(a));
-        if (a.equals("snakkHttpOptions.connectTimeout"))
-          cout = Integer.parseInt(httpArgs[0].sa(a));
+
+    try {
+      if (httpArgs.length > 0) {
+        for (String a : httpArgs[0].getPopulatedAttr()) {
+          if (a.equals("snakkHttpOptions.readTimeout"))
+            tout = Integer.parseInt(httpArgs[0].sa(a));
+          if (a.equals("snakkHttpOptions.connectTimeout"))
+            cout = Integer.parseInt(httpArgs[0].sa(a));
+        }
       }
+    } catch (Throwable t) {
+      logger.warn("While parsing snakkHttpOptions: " + t.toString());
     }
 
     try {
