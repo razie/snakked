@@ -95,4 +95,6 @@ class TripleIdx[A, B, C] {
     (for (a <- idx; x <- a._2)
       yield f(a._1, x._1, x._2)).toList
   }
+
+  def size = idx.size
 }
