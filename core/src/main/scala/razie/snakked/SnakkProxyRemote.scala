@@ -11,20 +11,27 @@ import com.razie.pub.comms.Comms
 import com.razie.pub.util.Base64
 import java.io.IOException
 import razie.{Snakk, SnakkRequest, SnakkResponse}
-import scala.collection.mutable
-import sun.net.www.URLConnection
+import scala.collection.{JavaConverters, mutable}
 
 /** a snakking proxy
   *
+  * snakk.proxy.env = unique environment code
   * snakk.proxy.sources = URL to ping for snakk requests, separated by commas, like:
   * snakk.proxy.dests = snakk destinations managed by this proxy - selector when pinging
   *
-  * -D snakk.proxy.dests=http://host1.me.com:9000,http://host2.me.com:9000
+  * sample:
+  * -D snakk.proxy.env=345345345345434
+  * -D snakk.proxy.sources=http://specs.dieselapps.com:9000
+  * -D snakk.proxy.dests=localhost:9000
   *
+  * testing:
+  * -D snakk.proxy.env=raz
+  * -D snakk.proxy.sources=http://localhost:9000
+  * -D snakk.proxy.dests=specs.dieselapps.com:9000
   */
 object SnakkProxyRemote {
 
-  var name : String = InetAddress.getLocalHost().getHostAddress.replaceAllLiterally(".", "_")
+  var name : String = InetAddress.getLocalHost.getHostAddress.replaceAllLiterally(".", "_")
   var dests : Array[String] = Array()
   var sources : Array[String] = Array()
 
@@ -33,16 +40,25 @@ object SnakkProxyRemote {
   var DELAY : Int = 10000 // for short sleep
   var RESTART : Int = 120000 // for testing
 
+  @volatile var isActive = false
+  @volatile var counter = 0
+
+  def dets (name:String, dflt:String) : String = {
+    val res = System.getProperty("env."+name, dflt)
+    log (s"env prop: $name = $res")
+    res
+  }
+
   /** main entry point */
-  def main (args : Array[String]) = {
+  def main (args : Array[String]): Unit = {
     // are arguments set?
-    name = System.getProperty("snakk.proxy.env", name)
-    dests = System.getProperty("snakk.proxy.dests", "").split(",")
-    sources = System.getProperty("snakk.proxy.sources", "").split(",")
-    SLEEP1 = System.getProperty("snakk.proxy.sleep1", "1000").toInt
-    SLEEP2 = System.getProperty("snakk.proxy.sleep2", "5000").toInt
-    DELAY = System.getProperty("snakk.proxy.delay", "10000").toInt
-    RESTART = System.getProperty("snakk.proxy.restart", "120000").toInt
+    name     = dets("snakk_proxy_env", name)
+    dests    = dets("snakk_proxy_dests", "").split(",")
+    sources  = dets("snakk_proxy_sources", "").split(",")
+    SLEEP1   = dets("snakk_proxy_sleep1", "1000").toInt
+    SLEEP2   = dets("snakk_proxy_sleep2", "5000").toInt
+    DELAY    = dets("snakk_proxy_delay", "10000").toInt
+    RESTART  = dets("snakk_proxy_restart", "120000").toInt
 
     log("ARGS: " + args.mkString)
 
@@ -62,14 +78,19 @@ object SnakkProxyRemote {
   }
 
   /** main loop of proxy. If it ends, restart it... */
-  def mainLoop () = {
+  def mainLoop (): Unit = {
+    isActive = true
+    counter = 0
+
+    log("env: " + name);
     log("dests: " + dests.mkString(","))
     log("sources: " + sources.mkString(","))
 
     var sleep = SLEEP2
     var lastTime = System.currentTimeMillis() - DELAY - 1 // go straight to long sleep mode
-    var firstTime = System.currentTimeMillis()
+    val firstTime = System.currentTimeMillis()
 
+    log("starting loop")
     while (System.currentTimeMillis() - firstTime < RESTART) {
       var hadOne = false // when true, it won't sleep
 
@@ -95,24 +116,31 @@ object SnakkProxyRemote {
       log("... sleep "+sleep/1000)
       if(sleep > 0) Thread.sleep(sleep)
     }
+    log("ending mainLoop")
+    isActive = false
   }
 
   /** check one destination for one source and if any, do proxy and return true */
-  def checkAndProxy (dest:String, source:String) : Boolean = {
+  private def checkAndProxy(dest:String, source:String) : Boolean = {
     log(s"Checking $source for any requests for $name and $dest")
-    val resp = Snakk.body(Snakk.url(s"http://$source/snakk/check/$name/$dest"))
+    val proto = if(source.startsWith("http")) "" else "http://"
+    val resp = Snakk.body(Snakk.url(s"$proto$source/snakk/check/$name/$dest"))
 
-    if(resp.size > 1) {
+    if(resp.length > 1) {
       log(s"... got $resp")
 
       val rq = Snakk.requestFromJson(resp)
 
-      val r = doProxy(rq)
+      // handle on separate thread to relese the main
+      // todo join all these before shutting down every 2 minutes
+      razie.Threads.fork {
+        val r = doProxy(rq)
 
-      val content = razie.js.tojsons(r.toJson) + Snakk.SSS + r.content
+        val content = razie.js.tojsons(r.toJson) + Snakk.SSS + r.content
 
-      // send result and complete request
-      Snakk.body(Snakk.url("http://" + source + "/snakk/complete/" + rq.id, Map.empty, "POST"), Some(content))
+        // send result and complete request
+        Snakk.body(Snakk.url(proto + source + "/snakk/complete/" + rq.id, Map.empty, "POST"), Some(content))
+      }
       return true
     }
     else {
@@ -132,9 +160,18 @@ object SnakkProxyRemote {
 
       // make the call
       uc = (new URL(u).openConnection).asInstanceOf[HttpURLConnection]
-      for (a <- rq.headers) {
+      // disable auto-redirect, to force the remote browser to do the redirect and RESEND proper cookies
+      uc.setInstanceFollowRedirects(false)
+      uc.setConnectTimeout(5000)
+      uc.setReadTimeout(50000)
+
+      for (a <- rq.headerSeq) {
         uc.setRequestProperty(a._1, a._2)
       }
+
+      // overwrite to disable gzip encoding
+      //https://stackoverflow.com/questions/12321455/what-encoding-string-tells-a-web-server-not-to-send-gzip-content
+      uc.setRequestProperty("accept-encoding", "identity")
 
       uc.setRequestMethod(rq.method)
       if (rq.method == "POST" || rq.method == "PUT") {
@@ -146,7 +183,7 @@ object SnakkProxyRemote {
             val input = rq.content.getBytes("utf-8")
             os.write(input, 0, input.length)
           } finally if (os != null) os.close()
-        }
+        } finally {}
 
       };
 
@@ -154,13 +191,17 @@ object SnakkProxyRemote {
 
       val resCode = uc.getHeaderField(0)
 
-      val head = new mutable.HashMap[String, String]()
+      val head = new mutable.HashMap[String, List[String]]()
+      def headVal (name:String) : Option[String] = {
+        head.get(name).orElse(head.get(name.toLowerCase)).flatMap(_.headOption)
+      }
+
 
       // flatten headers into a map
-      import scala.collection.JavaConversions._
-      for (x <- uc.getHeaderFields.entrySet().iterator())
-        if (x.getKey() != null)
-          head.put(x.getKey, x.getValue.mkString)
+      import scala.collection.JavaConverters
+      for (x <- JavaConverters.asScalaIterator(uc.getHeaderFields.entrySet().iterator()))
+        if (x.getKey != null)
+          head.put(x.getKey, JavaConverters.asScalaBuffer(x.getValue).toList)
 
       val in = uc.getInputStream
 
@@ -172,17 +213,30 @@ object SnakkProxyRemote {
 
       // read bytes to use UTF-8 encoding rather than jvm default
       val response = Comms.readStreamBytes(in)
-//      val response = Comms.readStream(in)
 
-      log(s"... response ${response.getData.size} bytes")
-//      log(s"... response ${first100(response)}")
+      log(s"... response size is ${response.getData.length} bytes")
 
-      val ctype = head.get("Content-Type").orElse(head.get("content-type")).getOrElse("")
+      // ---------------------------- prepare response
+
+      // content type and encoding
+      val ctype = headVal("Content-Type").getOrElse("")
+      val zip = headVal("Content-Encoding").getOrElse("").contains("zip")
       val content =
-        if (Snakk.isText(ctype)) response.toString
-        else "SNAKK64" + Base64.encodeBytes(response.getData())
+        if (Snakk.isText(ctype) && !zip) {
+          val x = response.toString
+          log(s"... response content is ${first100(x)}")
+          x
+        }
+        else {
+          log ("---- SNAKKPROXY response is binary, encoding...")
+          "SNAKK64" + Base64.encodeBytes(response.getData)
+        }
 
-      val r = SnakkResponse (resCode, rc, head.toMap.asInstanceOf[Map[String,String]], content, ctype, rq.id)
+      val setc = headVal("Set-Cookie").getOrElse("")
+
+      // set-cookies (don't use local domain, use remote
+
+      val r = SnakkResponse (resCode, rc, head.toMap, content, ctype, rq.id)
 
       log("... sending response: " + r)
       return r
@@ -194,17 +248,19 @@ object SnakkProxyRemote {
         val resCode = uc.getHeaderField(0)
         val rc = Comms.getResponseCode(uc)
 
-        val head = new mutable.HashMap[String, String]()
-        val ctype = head.get("Content-Type").orElse(head.get("content-type")).getOrElse("")
-
         // flatten headers into a map
-        import scala.collection.JavaConversions._
-        for (x <- uc.getHeaderFields.entrySet().iterator())
-          if (x.getKey() != null)
-            head.put(x.getKey, x.getValue.mkString)
+        val head = new mutable.HashMap[String, List[String]]()
+        for (x <- JavaConverters.asScalaIterator(uc.getHeaderFields.entrySet().iterator()))
+          if (x.getKey != null)
+            head.put(x.getKey, JavaConverters.asScalaBuffer(x.getValue).toList)
 
-        val r = SnakkResponse (resCode, rc, head.toMap.asInstanceOf[Map[String,String]],
-          "", ctype, rq.id)
+        def headVal (name:String) : Option[String] = {
+          head.get(name).orElse(head.get(name.toLowerCase)).flatMap(_.headOption)
+        }
+
+        val ctype = headVal("Content-Type").getOrElse("")
+
+        val r = SnakkResponse (resCode, rc, head.toMap, "", ctype, rq.id)
 
         log("... sending response: " + r)
         return r
@@ -214,14 +270,12 @@ object SnakkProxyRemote {
 
 
   def log (s:String) : Unit = {
-    println("SNAKKPROXYREMOTE " +  s);
+    println("SNAKKP-REMOTE " +  s);
   }
 
-  def first100 (s:String) = {
+  private def first100(s:String) = {
     if(s.length > 100) s.substring(0,100)
     else s
   }
 
 }
-
-
