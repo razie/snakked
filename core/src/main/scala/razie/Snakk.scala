@@ -15,6 +15,7 @@ import com.razie.pub.util.Base64
 import java.util.Base64
 import play.api.mvc.{Cookies, Session}
 import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 
 /** 
  *  wraps an URL with some arguments to be passed in the call 
@@ -194,12 +195,12 @@ object Snakk {
 
   def requestFromJson (body:String) = {
     val m = razie.js.parse(body)
-    val h = m("headers").asInstanceOf[mutable.HashMap[String, String]]
+    val h = m("headers").asInstanceOf[mutable.HashMap[String, ListBuffer[String]]]
     SnakkRequest (
       m("protocol").toString,
       m("method").toString,
       m("url").toString,
-      h.toMap,
+      h.toMap.map(t=>(t._1, t._2.toList)),
       m("content").toString,
       m("id").toString
     )
@@ -211,16 +212,19 @@ object Snakk {
   def responseFromJson (body:String) = {
     val x = body.split (SSS, 2)
     val m = razie.js.parse(x(0))
-    val h = m("headers").asInstanceOf[mutable.HashMap[String, String]]
-    val ctype = h.get("Content-Type").orElse(h.get("content-type")).getOrElse("")
+    val h = m("headers").asInstanceOf[mutable.HashMap[String, ListBuffer[String]]]
+    def headVal (name:String) : Option[String] = {
+      h.get(name).orElse(h.get(name.toLowerCase)).flatMap(_.headOption)
+    }
+    val ctype = headVal("Content-Type").getOrElse("")
     val dec =
       if(x(1).startsWith("SNAKK64")) com.razie.pub.util.Base64.decode(x(1).substring(7))
       else x(1).getBytes()
 
     SnakkResponse(
       m("responseCode").toString,
-      m.get("resCode").getOrElse("200").toString.toInt,
-      h.toMap.asInstanceOf[Map[String,String]],
+      m.getOrElse("resCode", "200").toString.toInt,
+      h.toMap.map(t=>(t._1, t._2.toList)),
       new String(dec, 0, dec.size),
       ctype,
       m("id").toString)
@@ -230,7 +234,20 @@ object Snakk {
     ctype.contains ("text") || ctype.contains ("html") || ctype.contains ("script")
 }
 
-case class SnakkRequest (protocol: String, method: String, url: String, headers: Map[String, String], content: String, id:String = "") {
+case class SnakkRequest (
+  protocol: String,
+  method: String,
+  url: String,
+  headers: Map[String, List[String]],
+  content: String,
+  id:String = "") {
+
+  def headerSeq =
+    headers.flatMap(t=> t._2.map(v=> (t._1, v))).toSeq
+
+  def headerMap =
+    headers.map(t=> (t._1, t._2.mkString))
+
 
   private var _cookies: Cookies = null
   def cookies = _cookies
@@ -258,10 +275,16 @@ case class SnakkRequest (protocol: String, method: String, url: String, headers:
 case class SnakkResponse (
   responseCode:String,
   resCode:Int,
-  headers: Map[String, String],
+  headers: Map[String, List[String]],
   content: String,
   ctype:String,
   id:String="") {
+
+  def headerSeq =
+    headers.flatMap(t=> t._2.map(v=> (t._1, v))).toSeq
+
+  def headerMap =
+    headers.map(t=> (t._1, t._2.mkString)).toSeq
 
   private var _cookies: Cookies = null
   def cookies = _cookies

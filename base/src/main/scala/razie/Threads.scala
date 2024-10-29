@@ -142,7 +142,8 @@ object Threads {
       require(msec > 0)
       override def run() = {
          jl.Thread.sleep (msec)
-         c stop new ThreadTimeoutRtException (msec)
+         c.interrupt() // it may die on itsown - stop below is deprecated
+         c.stop() // can't use with exception new ThreadTimeoutRtException (msec)
       }
    }
 }
