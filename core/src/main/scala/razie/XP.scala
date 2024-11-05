@@ -238,7 +238,7 @@ class XPSolved[T](val xp: XP[T], val ctx: XpSolver[T]) {
 case class GPath(val expr: String) {
   // list of parsed elements
   lazy val elements =
-    for (e <- (expr split "/").filter(_ != "")) yield new XpElement(e)
+    for (e <- (expr split "/").filter(_ != "")) yield new XpElement(e.trim)
 
   lazy val nonaelements = elements.filter(_.attr != "@")
 
@@ -268,12 +268,13 @@ case class GPath(val expr: String) {
 class XpElement (val expr: String) {
   // todo maybe not allow space, but wrap the name in something automatically if spaces present?
   val (assoc_, attr, prefix, name, scond) = pa
+  // todo make optiona, not null, wtf
   val cond = XpCondFactory.make(scond)
 
   /** parse a path element */
   def pa = {
     try {
-      val parser = """(\{.*\})*([@])*([\w]+\:)*([\$|\w\. -]+|\**)(\[.*\])*""".r
+      val parser = """(\{.*\})*([@])*([\w]+\:)*([\$|\w\.-]+|\**) *(\[.*\])*""".r
       val parser (assoc_, attr, prefix, name, scond) = expr
       (assoc_, attr, prefix, name, scond)
     } catch {
@@ -292,13 +293,14 @@ class XpElement (val expr: String) {
     val t = Option(attr)   .filter(_ != "").map(x=> s"$x").mkString
     val p = Option(prefix) .filter(_ != "").map(x=> s"$x:").mkString
     val n = Option(name)   .filter(_ != "").map(x=> s"$x").mkString
-    val c = Option(scond)  .filter(_ != "").map(x=> s"[$x]").mkString
+    val c = Option(scond)  .filter(_ != "").map(x=> s"$x").mkString
     s"$a$t$p$n$c"
   }
 }
 
 /** overwrite this if you want other scriptables for conditions...it's just a syntax marker */
 object XpCondFactory {
+  // todo null seriously?
   def make(s: String) = if (s == null) null else new XpCond(s)
 }
 
@@ -311,15 +313,16 @@ object XpCondFactory {
  */
 class XpCond(val expr: String) {
   // TODO 1-2 implement something better
-  val (a, eq, v) = pa
+  private val (a, eq, v) = pa
 
   private def pa = {
     try {
-      val parser = """\[[@]*(\w+)[ \t]*([=!~]+)[ \t]*[']*([^']*)[']*\]""".r
+        val parser = """\[[@]*(\w+)[ \t]*([=!~]+|is|not)[ \t]*([^\]]*)[ \t]*\]""".r
+//      val parser = """\[[@]*(\w+)[ \t]*([=!~]+)[ \t]*['"]*([^'"\]]*)['"]*\]""".r
       val parser(a, eq, v) = expr
       (a, eq, v)
     } catch {
-      case s@_ => throw new RuntimeException("Not valid XPATH: " + expr, s)
+      case s@_ => throw new RuntimeException("Not valid XPATH XpCond: " + expr, s)
     }
   }
 
@@ -329,16 +332,35 @@ class XpCond(val expr: String) {
   def passes[T](o: T, ctx: XpSolver[T]): Boolean = {
     lazy val temp = ctx.getAttr(o, a)
 
+    val value = if (v.startsWith("\"") || v.startsWith("'")) {
+      v.substring(1, v.length-1)
+    } else {
+      // an id or number?
+      if (v.matches(raw"\d*\.?\d+")) v
+      else ctx.getAttr(o, v)
+    }
+
     eq match {
-      case "==" => v == temp
-      case "!=" => v != temp
-      case "~=" => temp.matches(v)
+      case "==" => value == temp
+      case "!=" => value != temp
+      case "~=" => temp.matches(value)
+      case "is" if v == "defined" || v == "empty" => temp.isEmpty
+      case "not" if v == "defined" || v == "empty" => !temp.isEmpty
       case _ => throw new IllegalArgumentException("ERR_XPCOND operator unknown: " + eq + " in expr \"" + expr + "\"")
     }
   }
 
-  def asMap = {
-    Map(a -> v)
+  // todo only put in map equal conditions, not others
+  def asMap[T] (ctx: XpSolver[T]) = {
+    val value = if (v.startsWith("\"") || v.startsWith("'")) {
+      v.substring(1, v.length-1)
+    } else {
+      // an id or number?
+      if (v.matches(raw"\d*\.?\d+")) v
+      else ctx.getOptAttr(v).mkString
+    }
+
+    Map(a -> value)
   }
 
   override def toString = expr
@@ -393,12 +415,27 @@ trait XpSolver[T] {
   def getNext (curr: (T, U), tag: String, assoc: String, xe: Option[XpElement]): Iterable[(T, U)]
 
   /**
-   * get the value of an attribute from the given node
+    * get the value of an attribute from the given node
+    *
+    * @param curr the current element
+    * @return the value, toString, of the attribute
+    */
+  def getAttr (curr: T, attr: String): String
+
+  /**
+    * get the value of an attribute from the given node
+    *
+    * @param curr the current element
+    * @return the value, toString, of the attribute
+    */
+  def getOptAttr (curr: T, attr: String): Option[String] = Some (getAttr(curr, attr))
+
+  /**
+   * get the value of an attribute from a context
    *
-   * @param curr the current element
    * @return the value, toString, of the attribute
    */
-  def getAttr (curr: T, attr: String): String
+  def getOptAttr (attr: String): Option[String] = None
 
   /**
    * reduce the current set of possible nodes based on the given condition.
