@@ -225,7 +225,11 @@ object SnakkProxyRemote {
         if (Snakk.isText(ctype) && !zip) {
           val x = response.toString
           log(s"... response content is ${first100(x)}")
-          x
+
+          // if it's diesel and runs via proxy - color red
+          x.replaceAllLiterally(
+            "id=\"dieselnavbar\"",
+            "id=\"dieselnavbar\" style=\"background-color:red\"")
         }
         else {
           log ("---- SNAKKPROXY response is binary, encoding...")
